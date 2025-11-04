@@ -9,7 +9,7 @@ interface PasswordInputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
 }
 
-export function PasswordInput({ label, id, ...props }: PasswordInputProps) {
+export function PasswordInput({ label, id, placeholder, ...props }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   return (
     <FormField label={label} id={id}>
@@ -18,12 +18,13 @@ export function PasswordInput({ label, id, ...props }: PasswordInputProps) {
           id={id}
           type={showPassword ? "text" : "password"}
           className="pr-12"
+          placeholder={showPassword ? "Sup3r-S3cur3-Passw0rd" : placeholder}
           {...props}
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute inset-y-0 right-3 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors max-h-11 mt-1"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? (
