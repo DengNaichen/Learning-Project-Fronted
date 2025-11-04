@@ -8,39 +8,29 @@ function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <div className="flex h-screen">
-      {/* Left side - Main Content */}
-      <div className="w-1/2 flex items-center justify-center bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="flex justify-center gap-8 mb-8">
-            <a href="https://vite.dev" target="_blank">
-              <img src={viteLogo} className="logo" alt="Vite logo" />
-            </a>
-            <a href="https://react.dev" target="_blank">
-              <img src={reactLogo} className="logo react" alt="React logo" />
-            </a>
-          </div>
-          <h1 className="text-4xl font-bold mb-8">Vite + React</h1>
-          <div className="card">
-            <button
-              onClick={() => setCount((count) => count + 1)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-            >
-              count is {count}
-            </button>
-            <p className="mt-4 text-gray-300">
-              Edit <code>src/App.tsx</code> and save to test HMR
-            </p>
-          </div>
-          <p className="read-the-docs mt-8 text-gray-400">
-            Click on the Vite and React logos to learn more
-          </p>
-        </div>
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Right side - Login Page */}
-      <div className="w-1/2">
+      {/* Main content */}
+      <div className="relative z-10 flex items-center justify-end min-h-screen p-4 pr-20">
         <LoginPage />
+      </div>
+
+      {/* Footer with logos and info */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center text-white/60">
+        <div className="flex justify-center gap-6 mb-4">
+          <a href="https://vite.dev" target="_blank" className="hover:opacity-80 transition-opacity">
+            <img src={viteLogo} className="logo h-12" alt="Vite logo" />
+          </a>
+          <a href="https://react.dev" target="_blank" className="hover:opacity-80 transition-opacity">
+            <img src={reactLogo} className="logo react h-12" alt="React logo" />
+          </a>
+        </div>
+        <p className="text-sm">Built with Vite + React</p>
       </div>
     </div>
   )

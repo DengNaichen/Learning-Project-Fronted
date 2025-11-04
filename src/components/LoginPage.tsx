@@ -1,4 +1,5 @@
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState } from "react";
+import type {FormEvent, ChangeEvent} from "react"
 import { InputField } from "./ui/InputField";
 import { PasswordInput } from "./ui/PasswordInput";
 import { SubmitButton } from "./ui/SubmitButton";
@@ -46,9 +47,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+    <div className="w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-6 backdrop-blur-sm">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold text-gray-900"> Login </h2>
             <p className="text-gray-500">
@@ -114,7 +114,6 @@ export default function LoginPage() {
             </a>
           </div>
         </div>
-      </div>
     </div>
   );
 }
