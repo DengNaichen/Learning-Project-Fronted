@@ -1,7 +1,7 @@
 import apiClient from "./client";
 
 export interface RegistrationRequest {
-  username: string;
+  name: string;
   email: string;
   password: string;
 }
@@ -12,8 +12,8 @@ export interface LoginRequest {
 }
 
 export interface RegistrationResponse {
-  id: string; // TODO: check the backend
-  username: string;
+  id: string;
+  name: string;
   email: string;
 }
 

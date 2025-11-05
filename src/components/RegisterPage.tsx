@@ -15,7 +15,7 @@ type RegisterFormState = RegistrationRequest & {
 
 export default function RegisterPage() {
   const [FormData, SetFormData] = useState<RegisterFormState>({
-    username: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -27,7 +27,7 @@ export default function RegisterPage() {
 
     onSuccess: (data) => {
       console.log("Registration successful!", data);
-      alert(`User ${data.username} register Successfully`);
+      alert(`User ${data.name} registered successfully!`);
       //TODO: navigate to dashboard or some pages
     },
 
@@ -70,16 +70,16 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <InputField
             label="Username"
-            id="username"
-            name="username"
+            id="name"
+            name="name"
             required
-            value={FormData.username}
+            value={FormData.name}
             onChange={handleInputChange}
             placeholder="Your Name"
           />
           <InputField
             label="Email"
-            id="username"
+            id="email"
             name="email"
             type="email"
             required
