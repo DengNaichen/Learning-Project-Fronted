@@ -1,16 +1,18 @@
 import { useState } from "react";
-import type { FormEvent, ChangeEvent } from "react"
+import type { FormEvent, ChangeEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { loginUser } from "../api/auth";
+import { Link } from "react-router-dom";
+import type { LoginRequest } from "../api/auth";
 import { InputField } from "./ui/InputField";
 import { PasswordInput } from "./ui/PasswordInput";
 import { SubmitButton } from "./ui/SubmitButton";
 
-interface LoginFormData {
-  email: string;
-  password: string;
+interface LoginFormData extends LoginRequest {
+  // email: string;
+  // password: string;
   rememberMe: boolean;
 }
-
-// FIXME: Check and create proper theme in in tailwind so that the colors are consistent
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -18,24 +20,27 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
+  // const navigate = useNavigate()
 
-  //   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const loginMutation = useMutation({
+    mutationFn: loginUser,
 
+    onSuccess: (data) => {
+      console.log("Login successful!", data.access_token);
+      localStorage.setItem("accessToken", data.access_token);
+      // alert(`Successfully logged in with email: ${formData.email}`);
+      // navigate("www.google.com"); // FIXME: navigate to dashboard page
+    },
+    onError: (error) => {
+      console.error("Failed to login", error);
+    },
+  });
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      console.log("Login Information", formData);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      alert(`Successfully logged in with email: ${formData.email}`);
-    } catch (error) {
-      console.error("Failed to login", error);
-    } finally {
-      setIsLoading(false);
-    }
+    loginMutation.mutate({
+      email: formData.email,
+      password: formData.password,
+    });
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -51,18 +56,19 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white dark:bg-black rounded-2xl shadow-2xl p-8 space-y-6 backdrop-blur-sm">
-        <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-300"> Login </h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            {" "}
+      <div className="auth-card">
+        <div className="auth-header">
+          <h2 className="auth-title">
+            Login
+          </h2>
+          <p className="auth-subtitle">
             Please fill your account information
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <InputField
-            className="dark:placeholder-gray-400 placeholder-gray-500 text-gray-900 dark:text-gray-100"
+            className="input-styled"
             label="Email"
             id="email"
             name="email"
@@ -73,7 +79,7 @@ export default function LoginPage() {
             placeholder="you@email.com"
           />
           <PasswordInput
-            className="dark:placeholder-gray-400 placeholder-gray-500 text-gray-900 dark:text-gray-100"
+            className="input-styled"
             label="Password"
             id="password"
             name="password"
@@ -90,34 +96,43 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={formData.rememberMe}
                 onChange={handleInputChange}
-                className="h-4 w-4 text-blue-600 dark:text-blue-300 focus:ring-blue-500 dark:focus:ring-blue-600 border-gray-300 rounded cursor-pointer"
+                className="h-4 w-4 text-primary-light dark:text-primary-dark focus:ring-primary-light dark:focus:ring-primary-dark border-gray-300 rounded cursor-pointer"
               />
               <label
                 htmlFor="remember"
-                className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                className="ml-2 block text-sm text-text-primary-light dark:text-text-primary-dark cursor-pointer"
               >
                 Remember Me
               </label>
             </div>
             <a
               href="https://google.com"
-              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
+              className="text-sm font-medium link-primary"
             >
               Forgot your password?
             </a>
           </div>
-          <SubmitButton isLoading={isLoading} loadingText="Logging in..." disabled={isLoading || !formData.email || !formData.password}>
+          <SubmitButton
+            isLoading={loginMutation.isPending}
+            loadingText="Logging in..."
+            // disabled={isLoading || !formData.email || !formData.password}
+          >
             Login
           </SubmitButton>
+          {loginMutation.isError && (
+            <p className="form-error">
+              {loginMutation.error.message}
+            </p>
+          )}
         </form>
-        <div className="text-center text-sm text-gray-600 dark:text-gray-300 pt-4">
+        <div className="auth-footer">
           Don't have an account?{" "}
-          <a
-            href="#"
-            className="font-medium text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:text-blue-500 transition-colors"
+          <Link
+            to="/register"
+            className="font-medium link-primary"
           >
             Register Now
-          </a>
+          </Link>
         </div>
       </div>
     </div>
