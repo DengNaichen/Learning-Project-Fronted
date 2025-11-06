@@ -1,26 +1,10 @@
-import apiClient from "./client";
-
-export interface RegistrationRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegistrationResponse {
-  id: string;
-  name: string;
-  email: string;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-}
+import apiClient from "../../../api/client";
+import type {
+  RegistrationRequest,
+  LoginRequest,
+  RegistrationResponse,
+  LoginResponse,
+} from "../types/auth";
 
 export const registerUser = async (data: RegistrationRequest) => {
   const response = await apiClient.post<RegistrationResponse>(

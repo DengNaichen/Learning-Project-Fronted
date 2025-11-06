@@ -1,16 +1,14 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../api/auth";
-import { Link } from "react-router-dom";
-import type { LoginRequest } from "../api/auth";
-import { InputField } from "./ui/InputField";
-import { PasswordInput } from "./ui/PasswordInput";
-import { SubmitButton } from "./ui/SubmitButton";
+import type { LoginRequest } from "../types/auth";
+import { InputField } from "../../../components/ui/InputField";
+import { PasswordInput } from "../../../components/ui/PasswordInput";
+import { SubmitButton } from "../../../components/ui/SubmitButton";
 
 interface LoginFormData extends LoginRequest {
-  // email: string;
-  // password: string;
   rememberMe: boolean;
 }
 
@@ -20,7 +18,8 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
-  // const navigate = useNavigate()
+
+  const navigate = useNavigate();
 
   const loginMutation = useMutation({
     mutationFn: loginUser,
@@ -28,8 +27,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       console.log("Login successful!", data.access_token);
       localStorage.setItem("accessToken", data.access_token);
-      // alert(`Successfully logged in with email: ${formData.email}`);
-      // navigate("www.google.com"); // FIXME: navigate to dashboard page
+      navigate("/courses", { replace: true });
     },
     onError: (error) => {
       console.error("Failed to login", error);
@@ -58,12 +56,8 @@ export default function LoginPage() {
     <div className="w-full max-w-md">
       <div className="auth-card">
         <div className="auth-header">
-          <h2 className="auth-title">
-            Login
-          </h2>
-          <p className="auth-subtitle">
-            Please fill your account information
-          </p>
+          <h2 className="auth-title">Login</h2>
+          <p className="auth-subtitle">Please fill your account information</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -120,17 +114,12 @@ export default function LoginPage() {
             Login
           </SubmitButton>
           {loginMutation.isError && (
-            <p className="form-error">
-              {loginMutation.error.message}
-            </p>
+            <p className="form-error">{loginMutation.error.message}</p>
           )}
         </form>
         <div className="auth-footer">
           Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="font-medium link-primary"
-          >
+          <Link to="/register" className="font-medium link-primary">
             Register Now
           </Link>
         </div>

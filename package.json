@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.6",
+    "@types/katex": "^0.16.7",
     "axios": "^1.13.1",
+    "katex": "^0.16.25",
     "lucide-react": "^0.552.0",
+    "neo4j-driver": "^6.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5"

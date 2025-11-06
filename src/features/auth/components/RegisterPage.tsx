@@ -1,13 +1,12 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { registerUser } from "../api/auth";
-import type { RegistrationRequest } from "../api/auth";
-
-import { InputField } from "./ui/InputField";
-import { PasswordInput } from "./ui/PasswordInput";
-import { SubmitButton } from "./ui/SubmitButton";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { registerUser } from "../api/auth";
+import type { RegistrationRequest } from "../types/auth";
+import { InputField } from "../../../components/ui/InputField";
+import { PasswordInput } from "../../../components/ui/PasswordInput";
+import { SubmitButton } from "../../../components/ui/SubmitButton";
 
 type RegisterFormState = RegistrationRequest & {
   confirmPassword: string;

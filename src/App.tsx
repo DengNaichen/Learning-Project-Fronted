@@ -1,8 +1,7 @@
-// import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
-import LoginPage from "./components/LoginPage";
-import RegisterPage from "./components/RegisterPage";
+import { LoginPage, RegisterPage } from "./features/auth";
+import { CourseList, CourseDetail } from "./features/courses";
 
 function App() {
   return (
@@ -18,6 +17,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/courses" element={<CourseList />} />
+          <Route path="/courses/:courseId" element={<CourseDetail />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
         {/* <LoginPage /> */}
