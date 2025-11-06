@@ -1,12 +1,9 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import LoginPage from './components/LoginPage'
+import { Routes, Route, Navigate } from "react-router-dom";
+import "./App.css";
+import { LoginPage, RegisterPage } from "./features/auth";
+import { CourseList, CourseDetail } from "./features/courses";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Background decorative elements */}
@@ -17,23 +14,17 @@ function App() {
 
       {/* Main content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <LoginPage />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/courses" element={<CourseList />} />
+          <Route path="/courses/:courseId" element={<CourseDetail />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+        {/* <LoginPage /> */}
       </div>
-
-      {/* Footer with logos and info */}
-      {/* <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center text-white/60"> */}
-      {/*   <div className="flex justify-center gap-6 mb-4"> */}
-      {/*     <a href="https://vite.dev" target="_blank" className="hover:opacity-80 transition-opacity"> */}
-      {/*       <img src={viteLogo} className="logo h-12" alt="Vite logo" /> */}
-      {/*     </a> */}
-      {/*     <a href="https://react.dev" target="_blank" className="hover:opacity-80 transition-opacity"> */}
-      {/*       <img src={reactLogo} className="logo react h-12" alt="React logo" /> */}
-      {/*     </a> */}
-      {/*   </div> */}
-      {/*   <p className="text-sm">Built with Vite + React</p> */}
-      {/* </div> */}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
