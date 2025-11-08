@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useGetCourse, useEnrollInCourse } from "../hooks/useCourses";
 import { QuizPage } from "../../quiz";
 
 export const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [showQuiz, setShowQuiz] = useState(false);
 
   const {
@@ -33,6 +34,10 @@ export const CourseDetail: React.FC = () => {
 
   const handleBackToCourse = () => {
     setShowQuiz(false);
+  };
+
+  const handleViewKnowledgeGraph = () => {
+    navigate(`/courses/${courseId}/knowledge-graph`);
   };
 
   if (isLoading) {
@@ -170,6 +175,18 @@ export const CourseDetail: React.FC = () => {
                   nodes.
                 </p>
               </div>
+
+              <button
+                onClick={handleViewKnowledgeGraph}
+                className="
+                  px-6 py-3 text-base font-medium text-white
+                  rounded-lg shadow-sm transition-colors
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500
+                  bg-purple-600 hover:bg-purple-700
+                "
+              >
+                🌐 View Knowledge Graph (3D)
+              </button>
 
               <button
                 onClick={handleStartQuiz}
