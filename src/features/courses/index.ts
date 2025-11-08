@@ -2,6 +2,7 @@
 export { CourseList } from "./components/CourseList";
 export { CourseDetail } from "./components/CourseDetail";
 export { CourseRow } from "./components/CourseRow";
+export { default as KnowledgeGraphPage } from "./components/KnowledgeGraphPage";
 
 // Export hooks
 export { useGetAllCourses, useGetCourse, useEnrollInCourse } from "./hooks/useCourses";

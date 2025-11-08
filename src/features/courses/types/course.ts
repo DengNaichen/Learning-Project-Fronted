@@ -28,3 +28,22 @@ export interface EnrollmentResponseDTO {
 export interface ApiError { // FIXME: change this! use a better way to do it.
     message: string;
 }
+
+// Knowledge Graph Types
+export interface GraphNode {
+  id: string;
+  name: string;
+  description: string;
+  mastery_score: number; // 0.0 to 1.0, default 0.2 if no relationship exists
+}
+
+export interface GraphEdge {
+  source: string; // source node_id
+  target: string; // target node_id
+  type: "IS_PREREQUISITE_FOR" | "HAS_SUBTOPIC";
+}
+
+export interface KnowledgeGraphVisualization {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}

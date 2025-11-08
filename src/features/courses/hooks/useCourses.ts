@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllCourses, getCourse, enrollInCourse } from "../api/courses";
+import { getAllCourses, getCourse, enrollInCourse, getKnowledgeGraph } from "../api/courses";
 import type {
   FetchCourseResponseDTO,
   EnrollmentResponseDTO,
   Course,
   ApiError,
+  KnowledgeGraphVisualization,
 } from "../types/course";
 
 function convertDtoToCourse(dto: FetchCourseResponseDTO): Course {
@@ -60,5 +61,13 @@ export function useEnrollInCourse() {
     onError: (error: ApiError, courseId) => {
       console.error(`Failed to enroll in course ${courseId}:`, error.message);
     },
+  });
+}
+
+export function useGetKnowledgeGraph(courseId: string | undefined) {
+  return useQuery<KnowledgeGraphVisualization, Error>({
+    queryKey: ["knowledgeGraph", courseId],
+    queryFn: () => getKnowledgeGraph(courseId!),
+    enabled: !!courseId,
   });
 }
