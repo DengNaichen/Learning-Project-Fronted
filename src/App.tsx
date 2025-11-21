@@ -1,28 +1,26 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import "./App.css";
-import { LoginPage, RegisterPage } from "./features/auth";
-import { CourseList, CourseDetail, KnowledgeGraphPage } from "./features/courses";
+import { LoginPage, RegisterPage, HomePage } from "./features/auth";
+import { GraphList, GraphDetail, KnowledgeGraphPage } from "./features/courses";
+import { NotesPage } from "./features/notes";
 
 function App() {
-  return (
-    <div className="relative min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-amber-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl"></div>
-      </div>
+  const location = useLocation();
+  const isNotesPage = location.pathname === '/notes';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-      {/* Main content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+  return (
+    <div className="min-h-screen">
+      <div className={isNotesPage ? 'h-screen' : isAuthPage ? 'flex items-center justify-center min-h-screen p-4' : ''}>
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/courses" element={<CourseList />} />
-          <Route path="/courses/:courseId" element={<CourseDetail />} />
-          <Route path="/courses/:courseId/knowledge-graph" element={<KnowledgeGraphPage />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/graphs" element={<GraphList />} />
+          <Route path="/graphs/:graphId" element={<GraphDetail />} />
+          <Route path="/graphs/:graphId/knowledge-graph" element={<KnowledgeGraphPage />} />
+          <Route path="/notes" element={<NotesPage />} />
         </Routes>
-        {/* <LoginPage /> */}
       </div>
     </div>
   );

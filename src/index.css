@@ -1,37 +1,199 @@
 @import "tailwindcss";
 
 @theme {
-  /* Primary colors - used for main actions and links */
-  --color-primary-light: #2563eb;
-  --color-primary-dark: #60a5fa;
+  /* ===========================================
+   * COLOR SYSTEM - Simplified & Consistent
+   * =========================================== */
 
-  /* Primary hover states */
-  --color-primary-light-hover: #1e40af;
-  --color-primary-dark-hover: #93c5fd;
+  /* Primary Brand Color */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #3b82f6;
 
-  /* Text colors */
-  --color-text-primary-light: #111827;
-  --color-text-primary-dark: #d1d5db;
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
 
-  --color-text-secondary-light: #6b7280;
+  /* ===========================================
+   * LIGHT MODE COLORS
+   * =========================================== */
+
+  /* Text - Light Mode */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  /* Background - Light Mode */
+  --color-bg: #f9fafb;
+  --color-bg-elevated: #ffffff;
+  --color-bg-muted: #f3f4f6;
+
+  /* Border - Light Mode */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* ===========================================
+   * DARK MODE COLORS
+   * =========================================== */
+
+  /* Text - Dark Mode */
+  --color-text-primary-dark: #f9fafb;
   --color-text-secondary-dark: #9ca3af;
+  --color-text-tertiary-dark: #6b7280;
 
-  --color-text-error-light: #E53935;
-  --color-text-error-dark: #E53935;
+  /* Background - Dark Mode */
+  --color-bg-dark: #0f172a;
+  --color-bg-elevated-dark: #1e293b;
+  --color-bg-muted-dark: #334155;
 
-  /* Background colors */
-  --color-bg-card-light: #ffffff;
-  --color-bg-card-dark: #000000;
+  /* Border - Dark Mode */
+  --color-border-dark: #334155;
+  --color-border-strong-dark: #475569;
 
-  /* Icon colors */
-  --color-icon-light: #9ca3af;
-  --color-icon-dark: #6b7280;
-
-  --color-icon-light-hover: #4b5563;
-  --color-icon-dark-hover: #d1d5db;
+  /* ===========================================
+   * TYPOGRAPHY
+   * =========================================== */
+  --font-family-display: "Lexend", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Custom blinking caret animation */
+/* ===========================================
+ * BASE STYLES
+ * =========================================== */
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  height: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+/* Dark mode - system preference based */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-primary-dark);
+  }
+}
+
+/* Dark mode - manual class based */
+.dark body,
+html.dark body {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-primary-dark);
+}
+
+/* ===========================================
+ * COMPONENT CLASSES
+ * =========================================== */
+
+/* --- Links --- */
+.link {
+  @apply text-primary hover:text-primary-hover transition-colors;
+}
+
+/* --- Buttons --- */
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primary-hover;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-bg-muted text-text-primary hover:bg-border dark:bg-bg-muted-dark dark:text-text-primary-dark dark:hover:bg-border-dark;
+}
+
+.btn-sm {
+  @apply h-9 px-3 text-sm;
+}
+
+.btn-md {
+  @apply h-10 px-4 text-sm;
+}
+
+.btn-lg {
+  @apply h-12 px-6 text-base;
+}
+
+/* --- Inputs --- */
+.input {
+  @apply w-full h-10 px-3 rounded-lg border text-sm transition-colors
+    bg-bg-elevated text-text-primary border-border placeholder:text-text-tertiary
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+    dark:bg-bg-elevated-dark dark:text-text-primary-dark dark:border-border-dark dark:placeholder:text-text-tertiary-dark;
+}
+
+/* --- Cards --- */
+.card {
+  @apply bg-bg-elevated rounded-xl border border-border shadow-sm
+    dark:bg-bg-elevated-dark dark:border-border-dark;
+}
+
+/* --- Text Utilities --- */
+.text-heading {
+  @apply text-text-primary dark:text-text-primary-dark font-bold;
+}
+
+.text-body {
+  @apply text-text-primary dark:text-text-primary-dark;
+}
+
+.text-muted {
+  @apply text-text-secondary dark:text-text-secondary-dark;
+}
+
+/* --- Layout --- */
+.page-container {
+  @apply min-h-screen bg-bg dark:bg-bg-dark text-text-primary dark:text-text-primary-dark;
+}
+
+/* --- Navigation --- */
+.nav-header {
+  @apply flex items-center justify-between px-6 py-3 border-b
+    bg-bg-elevated border-border
+    dark:bg-bg-elevated-dark dark:border-border-dark;
+}
+
+.nav-link {
+  @apply text-sm font-medium text-text-secondary hover:text-primary transition-colors
+    dark:text-text-secondary-dark dark:hover:text-primary-light;
+}
+
+.nav-link-active {
+  @apply text-primary font-semibold dark:text-primary-light;
+}
+
+/* --- Form --- */
+.form-label {
+  @apply text-sm font-medium text-text-primary dark:text-text-primary-dark;
+}
+
+.form-error {
+  @apply text-sm text-error;
+}
+
+/* ===========================================
+ * ANIMATIONS
+ * =========================================== */
 @keyframes blink-caret {
   0%, 49% {
     border-color: transparent;
@@ -41,117 +203,7 @@
   }
 }
 
-/* input:focus { */
-/*   animation: none; /* Browser handles native caret */ */
-/* } */
-
-html {
-  height: 100%;
+/* Material Symbols configuration */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* a { */
-/*   font-weight: 500; */
-/*   color: #646cff; */
-/*   text-decoration: inherit; */
-/* } */
-/* a:hover { */
-/*   color: #535bf2; */
-/* } */
-
-/* Reusable Link Styles */
-.link-blue {
-  @apply text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors;
-}
-
-.link-primary {
-  @apply text-primary-light dark:text-primary-dark hover:text-primary-light-hover dark:hover:text-primary-dark-hover transition-colors;
-}
-
-/* Auth Card Styles */
-.auth-card {
-  @apply bg-bg-card-light dark:bg-bg-card-dark rounded-2xl shadow-2xl p-8 space-y-6 backdrop-blur-sm;
-}
-
-.auth-header {
-  @apply text-center space-y-2;
-}
-
-.auth-title {
-  @apply text-3xl font-bold text-text-primary-light dark:text-text-primary-dark;
-}
-
-.auth-subtitle {
-  @apply text-text-secondary-light dark:text-text-secondary-dark;
-}
-
-.auth-footer {
-  @apply text-center text-sm text-text-secondary-light dark:text-text-secondary-dark pt-4;
-}
-
-/* Form Styles */
-.form-error {
-  @apply text-center text-sm text-text-error-light;
-}
-
-.input-styled {
-  @apply placeholder-text-secondary-light dark:placeholder-text-secondary-dark text-text-primary-light dark:text-text-primary-dark;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  height: 100%;
-}
-
-/* h1 { */
-/*   font-size: 3.2em; */
-/*   line-height: 1.1; */
-/* } */
-
-/* button { */
-/*   border-radius: 8px; */
-/*   border: 1px solid transparent; */
-/*   padding: 0.6em 1.2em; */
-/*   font-size: 1em; */
-/*   font-weight: 500; */
-/*   font-family: inherit; */
-/*   background-color: #1a1a1a; */
-/*   cursor: pointer; */
-/*   transition: border-color 0.25s; */
-/* } */
-/* button:hover { */
-/*   border-color: #646cff; */
-/* } */
-/* button:focus, */
-/* button:focus-visible { */
-/*   outline: 4px auto -webkit-focus-ring-color; */
-/* } */
-/**/
-/* @media (prefers-color-scheme: light) { */
-/*   :root { */
-/*     color: #213547; */
-/*     background-color: #ffffff; */
-/*   } */
-/*   a:hover { */
-/*     color: #747bff; */
-/*   } */
-/*   button { */
-/*     background-color: #f9f9f9; */
-/*   } */
-/* } */

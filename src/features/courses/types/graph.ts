@@ -1,27 +1,34 @@
-export interface Course {
-  courseId: string;
-  courseName: string;
+export interface Graph {
+  graphId: string;
+  graphName: string;
   numOfKnowledgeNodes: number;
   isEnrolled: boolean;
   isPrimary: boolean;
 }
 
-export interface FetchCourseResponseDTO {
-    course_id: string;
-    course_name: string;
-    course_description: string;
-    is_enrolled: boolean;
-    num_of_knowledge: number;
+export interface FetchGraphResponseDTO {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    tags: string[];
+    is_public: boolean;
+    is_template: boolean;
+    owner_id: string;
+    enrollment_count: number;
+    node_count: number;
+    is_enrolled?: boolean;
+    created_at: string;
 }
 
 export interface EnrollmentRequestDTO {
-    course_id: string;
+    graph_id: string;
 }
 
 export interface EnrollmentResponseDTO {
     id: string
     student_id: string // FIXME: change this to userid later
-    course_id: string;
+    graph_id: string;
     enrollment_date: string
 }
 
@@ -38,8 +45,8 @@ export interface GraphNode {
 }
 
 export interface GraphEdge {
-  source: string; // source node_id
-  target: string; // target node_id
+  source_id: string; // source node_id
+  target_id: string; // target node_id
   type: "IS_PREREQUISITE_FOR" | "HAS_SUBTOPIC";
 }
 

@@ -1,4 +1,4 @@
-// Quiz type definitions
+// Question type definitions
 export type QuestionType =
   | "multiple_choice"
   | "fill_in_the_blank"
@@ -55,64 +55,33 @@ export type AnyQuestionDTO =
   | FillInTheBlankQuestionDTO
   | CalculationQuestionDTO;
 
-export type QuizStatus = "in_progress" | "completed" | "cancelled";
-
-export interface QuizAttemptResponseDTO {
-  attempt_id: string;
-  user_id: string;
-  course_id: string;
-  question_num: number;
-  status: QuizStatus;
-  score: number | null;
-  created_at: string;
-  questions: AnyQuestionDTO[];
-}
-
-// export interface QuizAttemptResponseDTO {
-//   attempt_id: string;
-//   questions: AnyQuestionDTO[];
-// }
-
-export interface QuizMultipleChoiceQuestionUI {
+export interface MultipleChoiceQuestionUI {
   questionId: string;
   questionType: "multiple_choice";
   text: string;
   difficulty: QuestionDifficulty;
   options: string[];
-  correctAnswer?: number; // Optional - not available when fetching active quiz
+  correctAnswer?: number;
 }
 
-export interface QuizFillInTheBlankQuestionUI {
+export interface FillInTheBlankQuestionUI {
   questionId: string;
   questionType: "fill_in_the_blank";
   text: string;
   difficulty: QuestionDifficulty;
 }
 
-export interface QuizCalculationQuestionUI {
+export interface CalculationQuestionUI {
   questionId: string;
   questionType: "calculation";
   text: string;
   difficulty: QuestionDifficulty;
 }
 
-export type AnyQuizQuestionUI =
-  | QuizMultipleChoiceQuestionUI
-  | QuizFillInTheBlankQuestionUI
-  | QuizCalculationQuestionUI;
-
-export interface QuizAttemptUI {
-  attemptId: string;
-  courseId: string;
-  questionNum: number;
-  status: QuizStatus;
-  questions: AnyQuizQuestionUI[];
-}
-
-export interface QuizStartRequest {
-  question_num: number;
-}
-
+export type AnyQuestionUI =
+  | MultipleChoiceQuestionUI
+  | FillInTheBlankQuestionUI
+  | CalculationQuestionUI;
 
 export interface MultipleChoiceAnswer {
   question_type: "multiple_choice";
@@ -129,7 +98,7 @@ export interface CalculationAnswer {
   numeric_answer: number;
 }
 
-export type AnyAnswer = 
+export type AnyAnswer =
   | MultipleChoiceAnswer
   | FillInTheBlankAnswer
   | CalculationAnswer;
@@ -139,26 +108,43 @@ export interface ClientAnswerInput {
   answer: AnyAnswer;
 }
 
-export interface QuizSubmissionRequest {
-  answers: ClientAnswerInput[];
-}
-
-export interface QuizSubmissionResponse {
-  attempt_id: string;
-  message: string
-}
-
-export interface StartQuizInput {
-  courseId: string;
-  questionNum: number;
-}
-
-export interface SubmitQuizInput {
-  attemptId: string;
-  answers: ClientAnswerInput[];
-}
-
 export interface ApiError {
   message: string;
   detail?: string;
+}
+
+// Next question recommendation response
+export interface NextQuestionResponseDTO {
+  question: AnyQuestionDTO | null;
+  node_id: string | null;
+  selection_reason: string;
+  priority_score: number | null;
+}
+
+export interface NextQuestionResponseUI {
+  question: AnyQuestionUI | null;
+  nodeId: string | null;
+  selectionReason: string;
+  priorityScore: number | null;
+}
+
+// Single answer submission
+export interface SingleAnswerSubmitRequest {
+  question_id: string;
+  user_answer: AnyAnswer;
+  graph_id: string;
+}
+
+export interface SingleAnswerSubmitResponseDTO {
+  answer_id: string;
+  is_correct: boolean;
+  mastery_updated: boolean;
+  next_question_id: string | null;
+}
+
+export interface SingleAnswerSubmitResponseUI {
+  answerId: string;
+  isCorrect: boolean;
+  masteryUpdated: boolean;
+  nextQuestionId: string | null;
 }

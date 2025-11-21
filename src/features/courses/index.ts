@@ -1,17 +1,21 @@
-// Export course components
-export { CourseList } from "./components/CourseList";
-export { CourseDetail } from "./components/CourseDetail";
-export { CourseRow } from "./components/CourseRow";
+// Export graph components
+export { GraphList } from "./components/GraphList";
+export { GraphDetail } from "./components/GraphDetail";
+export { GraphCard } from "./components/GraphCard";
 export { default as KnowledgeGraphPage } from "./components/KnowledgeGraphPage";
 
 // Export hooks
-export { useGetAllCourses, useGetCourse, useEnrollInCourse } from "./hooks/useCourses";
+export {
+  useGetAllGraph,
+  useGetGraph,
+  useEnrollInGraph,
+} from "./hooks/useGraphs";
 
 // Export types
 export type {
-  Course,
-  FetchCourseResponseDTO,
+  Graph,
+  FetchGraphResponseDTO,
   EnrollmentRequestDTO,
   EnrollmentResponseDTO,
   ApiError,
-} from "./types/course";
+} from "./types/graph";

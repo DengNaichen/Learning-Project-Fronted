@@ -1,41 +1,45 @@
 import apiClient from "../../../api/client";
 import type {
-  FetchCourseResponseDTO,
+  FetchGraphResponseDTO,
   EnrollmentRequestDTO,
   EnrollmentResponseDTO,
   KnowledgeGraphVisualization,
-} from "../types/course"
+} from "../types/graph";
 
-export const getAllCourses = async (): Promise<FetchCourseResponseDTO[]> => {
-  const response = await apiClient.get<FetchCourseResponseDTO[]>("/courses/");
+export const getAllGraph = async (): Promise<FetchGraphResponseDTO[]> => {
+  const response = await apiClient.get<FetchGraphResponseDTO[]>(
+    "/graphs/templates"
+  );
   return response.data;
 };
 
-export const getCourse = async (
-  courseId: string
-): Promise<FetchCourseResponseDTO> => {
-  const response = await apiClient.get<FetchCourseResponseDTO>(`/courses/${courseId}/`);
+export const getGraph = async (
+  graphId: string
+): Promise<FetchGraphResponseDTO> => {
+  const response = await apiClient.get<FetchGraphResponseDTO>(
+    `/graphs/${graphId}/`
+  );
   return response.data;
 };
 
-export const enrollInCourse = async (
-  courseId: string
+export const enrollInGraph = async (
+  graphId: string
 ): Promise<EnrollmentResponseDTO> => {
   const requestBody: EnrollmentRequestDTO = {
-    course_id: courseId,
+    graph_id: graphId,
   };
   const response = await apiClient.post<EnrollmentResponseDTO>(
-    `/courses/${courseId}/enrollments/`,
+    `/graphs/${graphId}/enrollments/`,
     requestBody
   );
   return response.data;
 };
 
 export const getKnowledgeGraph = async (
-  courseId: string
+  graphId: string
 ): Promise<KnowledgeGraphVisualization> => {
   const response = await apiClient.get<KnowledgeGraphVisualization>(
-    `/courses/${courseId}/knowledge-graph`
+    `/graphs/${graphId}/visualization`
   );
   return response.data;
 };

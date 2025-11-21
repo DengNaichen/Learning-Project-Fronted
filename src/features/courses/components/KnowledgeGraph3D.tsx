@@ -1,9 +1,8 @@
-import { useRef, useMemo } from "react";
-import ForceGraph3D from "react-force-graph-3d";
-import * as THREE from "three";
-import type { KnowledgeGraphVisualization } from "../types/course";
+import { useRef, useMemo, useCallback, useEffect } from "react";
+import ForceGraph2D from "react-force-graph-2d";
+import type { KnowledgeGraphVisualization } from "../types/graph";
 
-interface KnowledgeGraph3DProps {
+interface KnowledgeGraph2DProps {
   data: KnowledgeGraphVisualization;
 }
 
@@ -25,84 +24,142 @@ interface GraphData {
 
 const getMasteryColor = (masteryScore: number): string => {
   if (masteryScore < 0.33) {
-    return "#fceae3"; // low - light peachy
+    return "#ef4444"; // low - red
   } else if (masteryScore < 0.66) {
-    return "#acd8c2"; // medium - light green
+    return "#f59e0b"; // medium - amber
   } else {
-    return "#ec757b"; // high - coral red
+    return "#22c55e"; // high - green
   }
 };
 
 const getEdgeColor = (type: string): string => {
-  return type === "IS_PREREQUISITE_FOR" ? "#60a5fa" : "#a78bfa"; // blue-400 or purple-400 (brighter)
+  return type === "IS_PREREQUISITE_FOR" ? "#60a5fa" : "#a78bfa";
 };
 
-export default function KnowledgeGraph3D({ data }: KnowledgeGraph3DProps) {
-  const graphRef = useRef();
+export default function KnowledgeGraph2D({ data }: KnowledgeGraph2DProps) {
+  const graphRef = useRef<any>();
 
   const graphData: GraphData = useMemo(() => {
-    return {
-      nodes: data.nodes.map((node) => ({
-        id: node.id,
-        name: node.name,
-        description: node.description,
-        mastery: node.mastery_score,
-        color: getMasteryColor(node.mastery_score),
-      })),
-      links: data.edges.map((edge) => ({
-        source: edge.source,
-        target: edge.target,
+    const nodes = data.nodes.map((node) => ({
+      id: node.id,
+      name: node.name,
+      description: node.description,
+      mastery: node.mastery_score,
+      color: getMasteryColor(node.mastery_score),
+    }));
+
+    // Create a set of valid node IDs for filtering edges
+    const nodeIds = new Set(nodes.map((n) => n.id));
+
+    // Debug: log the data to see what we're getting
+    console.log("Raw data:", data);
+    console.log("Node IDs:", Array.from(nodeIds));
+    console.log("Edges:", data.edges);
+
+    // Filter edges to only include those with valid source and target nodes
+    const links = (data.edges || [])
+      .filter((edge) => {
+        const valid = nodeIds.has(edge.source_id) && nodeIds.has(edge.target_id);
+        return valid;
+      })
+      .map((edge) => ({
+        source: edge.source_id,
+        target: edge.target_id,
         type: edge.type,
         color: getEdgeColor(edge.type),
-      })),
-    };
+      }));
+
+    console.log("Final links:", links);
+    return { nodes, links };
   }, [data]);
 
-  // Custom node object to make spheres smoother and opaque
-  const nodeThreeObject = useMemo(() => {
-    return (node: any) => {
-      const geometry = new THREE.SphereGeometry(8, 32, 32); // increased radius from 5 to 8
-
-      // Simple opaque material with the custom colors
-      const material = new THREE.MeshBasicMaterial({
-        color: node.color,
-        transparent: false,
-        opacity: 1,
-      });
-
-      return new THREE.Mesh(geometry, material);
-    };
+  // Configure force simulation for better layout
+  useEffect(() => {
+    if (graphRef.current) {
+      graphRef.current.d3Force("charge").strength(-300);
+      graphRef.current.d3Force("link").distance(100);
+    }
   }, []);
+
+  // Custom node rendering for 2D canvas
+  const nodeCanvasObject = useCallback(
+    (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      // Skip rendering if coordinates are not yet calculated
+      if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
+        return;
+      }
+
+      const radius = 20;
+
+      // Draw outer glow
+      const gradient = ctx.createRadialGradient(
+        node.x, node.y, radius * 0.6,
+        node.x, node.y, radius * 1.8
+      );
+      gradient.addColorStop(0, node.color);
+      gradient.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius * 1.8, 0, 2 * Math.PI);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Draw main circle
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = node.color;
+      ctx.fill();
+
+      // Draw border
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 2 / globalScale;
+      ctx.stroke();
+    },
+    []
+  );
 
   return (
     <div className="w-full h-full">
-      <ForceGraph3D
+      <ForceGraph2D
         ref={graphRef}
         graphData={graphData}
         nodeLabel={(node: any) => `
           <div style="
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.95);
+            color: #f1f5f9;
+            padding: 12px 16px;
+            border-radius: 8px;
             font-size: 14px;
-            max-width: 200px;
+            max-width: 220px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
           ">
-            <div style="font-weight: bold; margin-bottom: 4px;">${node.name}</div>
-            <div style="font-size: 12px; color: #aaa;">${node.description}</div>
-            <div style="margin-top: 4px; font-size: 12px;">
-              Mastery: ${(node.mastery * 100).toFixed(0)}%
+            <div style="font-weight: 600; margin-bottom: 6px; color: #fff;">${node.name}</div>
+            <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">${node.description}</div>
+            <div style="margin-top: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+              <span style="color: #64748b;">Mastery:</span>
+              <span style="
+                color: ${node.color};
+                font-weight: 600;
+              ">${(node.mastery * 100).toFixed(0)}%</span>
             </div>
           </div>
         `}
-        nodeThreeObject={nodeThreeObject}
+        nodeCanvasObject={nodeCanvasObject}
+        nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, 22, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }}
         linkColor={(link: any) => link.color}
-        linkWidth={3}
-        linkDirectionalArrowLength={3.5}
-        linkDirectionalArrowRelPos={1}
-        linkCurvature={0.1}
-        linkDirectionalParticles={0}
-        backgroundColor="#000000"
+        linkWidth={2}
+        linkDirectionalArrowLength={8}
+        linkDirectionalArrowRelPos={0.9}
+        linkCurvature={0.15}
+        linkLineDash={[]}
+        cooldownTicks={100}
+        onEngineStop={() => graphRef.current?.zoomToFit(400, 50)}
+        backgroundColor="transparent"
       />
     </div>
   );
