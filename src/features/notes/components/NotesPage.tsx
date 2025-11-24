@@ -109,36 +109,20 @@ export function NotesPage() {
     }
   };
 
-  const handleSave = async () => {
-    if (!currentNote) return;
-
-    setIsSaving(true);
-    try {
-      await saveNote({
-        ...currentNote,
-        blocks: JSON.stringify(blocks),
-        updatedAt: Date.now(),
-      });
-      await loadNotes();
-    } catch (error) {
-      console.error("Failed to save note:", error);
-      alert("Failed to save note");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleBlocksChange = useCallback(
     (newBlocks: CustomBlock[]) => {
       setBlocks(newBlocks);
 
       // Auto-save with debounce
       if (currentNote) {
+        setIsSaving(true);
         saveNote({
           ...currentNote,
           blocks: JSON.stringify(newBlocks),
           updatedAt: Date.now(),
-        }).catch(console.error);
+        })
+          .catch(console.error)
+          .finally(() => setIsSaving(false));
       }
     },
     [currentNote]
