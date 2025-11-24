@@ -11,6 +11,7 @@ export function SubmitButton({
   isLoading,
   loadingText = "Loading ...",
   children,
+  className = "",
   ...props
 }: SubmitButtonProps) {
   return (
@@ -18,7 +19,7 @@ export function SubmitButton({
       type="submit"
       {...props}
       disabled={isLoading || props.disabled}
-      className="w-full bg-primary-light dark:bg-white dark:text-text-primary-light text-white py-3 rounded-lg font-medium hover:bg-primary-light-hover dark:hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2 dark:focus:ring-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className={`btn-primary btn-lg w-full ${className}`}
     >
       {isLoading ? (
         <span className="flex items-center justify-center">
