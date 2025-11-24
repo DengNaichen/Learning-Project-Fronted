@@ -8,7 +8,7 @@ import type {
   SingleAnswerSubmitResponseUI,
 } from "../types/question";
 import { getNextQuestion, submitAnswer } from "../api/questions";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 function convertQuestionDtoToUi(dto: AnyQuestionDTO): AnyQuestionUI {
   const baseUiQuestion = {
@@ -48,10 +48,10 @@ function convertNextQuestionDtoToUi(dto: NextQuestionResponseDTO): NextQuestionR
   };
 }
 
-export function useGetNextQuestion(graphId: string | undefined) {
+export function useGetNextQuestion(graphId: string | undefined, isOwner: boolean = false) {
   return useQuery<NextQuestionResponseDTO, Error, NextQuestionResponseUI>({
-    queryKey: ["nextQuestion", graphId],
-    queryFn: () => getNextQuestion(graphId!),
+    queryKey: ["nextQuestion", graphId, isOwner],
+    queryFn: () => getNextQuestion(graphId!, isOwner),
     select: convertNextQuestionDtoToUi,
     enabled: !!graphId,
   });
@@ -67,16 +67,11 @@ function convertSubmitResponseDtoToUi(dto: SingleAnswerSubmitResponseDTO): Singl
 }
 
 export function useSubmitAnswer() {
-  const queryClient = useQueryClient();
-
   return useMutation<SingleAnswerSubmitResponseUI, Error, SingleAnswerSubmitRequest>({
     mutationFn: async (request) => {
       const response = await submitAnswer(request);
       return convertSubmitResponseDtoToUi(response);
     },
-    onSuccess: (_, variables) => {
-      // Invalidate the next question query for this graph to refetch
-      queryClient.invalidateQueries({ queryKey: ["nextQuestion", variables.graph_id] });
-    },
+    // 不在这里 invalidate，让用户点击 "Next Question" 时才获取新问题
   });
 }

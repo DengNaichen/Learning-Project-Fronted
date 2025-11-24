@@ -1,6 +1,16 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../../../hooks/useTheme";
 
 export default function HomePage() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isDark, toggle } = useTheme();
+
+  // Generate a cat avatar using DiceBear API based on user name
+  const avatarUrl = user?.name
+    ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=transparent`
+    : null;
+
   return (
     <div className="page-container">
       <div className="layout-container flex h-full grow flex-col">
@@ -21,21 +31,56 @@ export default function HomePage() {
                   <a className="nav-link" href="#how-it-works">
                     How It Works
                   </a>
-                  <a className="nav-link" href="#features">
-                    Features
-                  </a>
                   <Link to="/graphs" className="nav-link">
                     Explore
                   </Link>
                 </div>
               </div>
               <div className="flex flex-1 justify-end gap-3 items-center">
-                <Link to="/login" className="btn-secondary btn-md">
-                  Log In
-                </Link>
-                <Link to="/register" className="btn-primary btn-md">
-                  Sign Up
-                </Link>
+                <button
+                  onClick={toggle}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary dark:text-text-secondary-dark hover:bg-bg-muted dark:hover:bg-bg-muted-dark transition-colors"
+                  aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {isDark ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  )}
+                </button>
+                {isLoading ? null : isAuthenticated ? (
+                  <Link
+                    to="/me"
+                    className="w-10 h-10 rounded-full overflow-hidden bg-bg-muted dark:bg-bg-muted-dark hover:ring-2 hover:ring-primary/50 transition-all duration-200"
+                  >
+                    <img
+                      src={avatarUrl || ""}
+                      alt={user?.name || "User"}
+                      className="w-full h-full object-cover"
+                    />
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/login" className="btn-secondary btn-md">
+                      Log In
+                    </Link>
+                    <Link to="/register" className="btn-primary btn-md">
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </header>
 
@@ -52,7 +97,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex-wrap gap-4 flex justify-center">
-                  <Link to="/register" className="btn-primary btn-lg">
+                  <Link to={isAuthenticated ? "/my-graphs" : "/register"} className="btn-primary btn-lg">
                     <span className="truncate">Start Creating Your Graph</span>
                   </Link>
                   <Link
@@ -62,15 +107,11 @@ export default function HomePage() {
                     <span className="truncate">Explore Sample Graphs</span>
                   </Link>
                 </div>
-                <div
-                  className="w-full max-w-4xl mt-8 bg-center bg-no-repeat aspect-video bg-cover rounded-xl shadow-2xl"
-                  style={{
-                    backgroundImage:
-                      "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCp3pL0KNOW3aSHycsk_qq7IcZRqorHgKkKGp285qYrrEykQsOG0gX1wtyXjoALDrv-P9DhIhrLFluSzu1Be4ez9FkpTZ6k__bJOiA3ayEDrlnb4Qdi64NM8vMIPpCZqnV2HV2ipjV581TLrlXRfHDIBtmrTYhIZpVRg1vV52-pNiTNQLdydpRxezKrJFMVbyg8wGWL6uXeckyjbvGw8yzulViQ5OEthZCHAe3VLEoFMSETWu6Mj0tejLZ3EHuhok0nK9ZnxfLjERM')",
-                  }}
-                  role="img"
-                  aria-label="An abstract visualization of a colorful, interconnected knowledge graph"
-                ></div>
+                <img
+                  src="/Knowledge-Graph.webp"
+                  alt="An abstract visualization of a colorful, interconnected knowledge graph"
+                  className="w-full max-w-2xl mt-8"
+                />
               </section>
 
               {/* How It Works Section */}
@@ -114,92 +155,6 @@ export default function HomePage() {
                 </div>
               </section>
 
-              {/* Features Section */}
-              <section id="features" className="py-16 md:py-24 space-y-12">
-                <div className="flex flex-col gap-4 text-center items-center">
-                  <h2 className="text-3xl font-bold leading-tight tracking-[-0.015em] md:text-4xl text-text-primary dark:text-text-primary-dark">
-                    A Gamified Approach to Learning
-                  </h2>
-                  <p className="text-lg font-normal leading-normal text-text-secondary dark:text-text-secondary-dark max-w-2xl">
-                    Learning shouldn't be a chore. We've integrated game mechanics to make your educational journey engaging, rewarding, and fun.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="card flex flex-col gap-4 overflow-hidden">
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover"
-                      style={{
-                        backgroundImage:
-                          "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz71xe6RObomVMuNUmz6RKYCKfNA5bcFr6MSOk8ALlg2_VgjioH7jKotzg-3xIa1qjpav2vdLIqpuxJXeNy9t5U8vgbrGX-Hw3qk2biq4QsRCpYAuYjFyLe0A5vT5PCMUE-vKLctBPYmO4yJ5plAH8QnrdDx3fLQo3aM1zHvy6CBFrunxBJ4ZfjYgPaJg2wo9t1jXeLcLwE1ee6jgt8Ti7SU7lazQ_E0MoIxH1CSNQhOvuhTn-bOuaCklvsdWS4TClTRb9QbIINEc')",
-                      }}
-                      role="img"
-                      aria-label="Stylized map with unlocked sections"
-                    ></div>
-                    <div className="p-6 flex flex-col gap-2">
-                      <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Zelda-Style Map Unlocking</h3>
-                      <p className="text-text-secondary dark:text-text-secondary-dark">
-                        Venture into the unknown. As you learn new topics, the fog of war recedes, revealing interconnected concepts and new paths to explore.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="card flex flex-col gap-4 overflow-hidden">
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover"
-                      style={{
-                        backgroundImage:
-                          "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBe-Hv9qVW-sazrvMqVtOf07GU-PmAtVDIAB4DRPpxbFkTwTKBEeV-sW7vz7zU1_MbHKwQR5eK7hRJnQNPH_Xk5ay2WaDTzChQew0mjXXKJJXC9UP8QLRCtpljc9-lrYw8uxzYkY4loANfj8bCsCZ7tn-XfEkZc2AMu74FmaYqTN4gJZhA0tDUCdUZ35DlXBHapSSLyzTp-y53FGqC5rYlaEYmsWBsIxYVRXwdkROAgKwy8ZDMFK983y-YPZdfueUNhxO3I4WTMGK4')",
-                      }}
-                      role="img"
-                      aria-label="A colorful map being painted"
-                    ></div>
-                    <div className="p-6 flex flex-col gap-2">
-                      <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Splatoon-Style Coloring</h3>
-                      <p className="text-text-secondary dark:text-text-secondary-dark">
-                        Claim your territory of knowledge! Mark nodes as 'mastered' to color them in, creating a vibrant visual testament to your progress.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="card flex flex-col gap-4 overflow-hidden md:col-span-2 lg:col-span-1">
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover"
-                      style={{
-                        backgroundImage:
-                          "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDXr-e_YnJ2YscBj6XXORxSnSAKmPrQXZOS0hsOV-h3F016MKcwFOpG0ZBP3y6Ex8DE5fDY6falIca5jxcTJYr0s6siqxbc3NM7V0wO_MNG9ihimWa0mvEYG1S4apBjtYEAKt70LoJPwCt1yRRvs5o5umCA6OkLWxijaDz4opJYKQt2vhUcOEALjJ_5tvYjAY9Tr_qJT-f5G-v9Nv2abZ0m4kVz0GSFNeyeUSEtHT8WrJIeQAho6YouTmfvToN8o0jbakvKA2Wma-Y')",
-                      }}
-                      role="img"
-                      aria-label="A glowing tower overlooking a map"
-                    ></div>
-                    <div className="p-6 flex flex-col gap-2">
-                      <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Sky View Towers</h3>
-                      <p className="text-text-secondary dark:text-text-secondary-dark">
-                        Gain a new perspective. Activate key nodes to reveal entire sub-sections of your knowledge graph, helping you see the big picture.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* CTA Section */}
-              <section className="my-16 md:my-24">
-                <div className="relative flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-xl bg-primary/10 dark:bg-primary/20 text-center overflow-hidden">
-                  <div className="absolute -bottom-1/2 -right-1/4 size-[400px] text-primary/10 dark:text-primary/20">
-                    <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21.219 22c0 0-3.182-5.048.813-10-2.822-5.528.98-10 .98-10l-17.709.01S2.52 7.058-2.094 12.01C-6.052 16.952.135 22 .135 22l21.084-.001z"></path>
-                    </svg>
-                  </div>
-                  <div className="relative z-10 flex flex-col items-center gap-6">
-                    <h2 className="text-3xl font-bold leading-tight tracking-[-0.015em] md:text-4xl max-w-2xl text-text-primary dark:text-text-primary-dark">
-                      Ready to Start Your Adventure?
-                    </h2>
-                    <p className="text-lg font-normal leading-normal text-text-secondary dark:text-text-secondary-dark max-w-xl">
-                      Create your first knowledge graph for free. No credit card required. Begin mapping your mind and transforming the way you learn, today.
-                    </p>
-                    <Link to="/register" className="btn-primary btn-lg mt-2">
-                      <span className="truncate">Start Creating for Free</span>
-                    </Link>
-                  </div>
-                </div>
-              </section>
             </main>
           </div>
         </div>

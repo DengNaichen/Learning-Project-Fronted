@@ -16,12 +16,14 @@ import 'highlight.js/styles/github-dark.css';
 import { saveCompletedBlock, isBlockCompleted, deleteCompletedBlock, type CompletedBlock } from '../db/indexedDB';
 import { NodeReference, createSuggestionRenderer, nodeReferenceStyles, removeInvalidReferences } from './NodeReferenceSuggestion';
 
-// UUID 生成函数
+/**
+ * Generate a unique block ID
+ */
 function generateId(): string {
   return `block-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-// 导入常用语言的语法支持
+// Import syntax highlighting for common languages
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
 import python from 'highlight.js/lib/languages/python';
@@ -33,7 +35,7 @@ import json from 'highlight.js/lib/languages/json';
 import bash from 'highlight.js/lib/languages/bash';
 import sql from 'highlight.js/lib/languages/sql';
 
-// 创建 lowlight 实例并注册语言
+// Create lowlight instance and register languages
 const lowlight = createLowlight();
 lowlight.register('javascript', javascript);
 lowlight.register('typescript', typescript);
@@ -51,27 +53,27 @@ interface BlockInfo {
   position: number;
 }
 
-// 树节点信息
+/** Tree node information */
 export interface BlockNode {
   id: string;
   parentId: string | null;
   indent: number;
   position: number;
   children: string[];
-  references: string[]; // 该节点引用的其他节点 ID
+  references: string[]; // IDs of nodes this node references
 }
 
-// Reference 关系
+/** Reference relationship */
 export interface BlockReference {
-  fromId: string; // 引用来源节点
-  toId: string;   // 被引用节点
+  fromId: string; // Source node of the reference
+  toId: string;   // Target node being referenced
 }
 
-// 树状结构
+/** Tree structure */
 export interface BlockTree {
   nodes: Map<string, BlockNode>;
   rootIds: string[];
-  references: BlockReference[]; // 所有引用关系
+  references: BlockReference[]; // All reference relationships
 }
 
 interface TiptapEditorProps {
@@ -79,10 +81,12 @@ interface TiptapEditorProps {
   onChange?: (content: string) => void;
   onBlockCreated?: (blockInfo: BlockInfo) => void;
   onTreeChange?: (tree: BlockTree) => void;
-  noteId?: string; // 笔记 ID，用于关联到 IndexedDB
+  noteId?: string; // Note ID for IndexedDB association
 }
 
-// EditableBlock NodeView 组件
+/**
+ * EditableBlock NodeView Component
+ */
 function EditableBlockComponent(props: NodeViewProps) {
   const { node, editor } = props;
   const [isCompleted, setIsCompleted] = useState(false);
@@ -92,7 +96,7 @@ function EditableBlockComponent(props: NodeViewProps) {
   const indent = node.attrs.indent || 0;
   const parentId = node.attrs.parentId;
 
-  // 检查 block 是否已完成
+  // Check if block is completed
   useEffect(() => {
     const checkCompleted = async () => {
       if (blockId) {
@@ -103,20 +107,22 @@ function EditableBlockComponent(props: NodeViewProps) {
     checkCompleted();
   }, [blockId]);
 
-  // 提取 block 的文本内容和元数据
+  /**
+   * Extract block text content and metadata
+   */
   const extractBlockData = () => {
-    // 获取标题 (第一个 h3)
+    // Get title (first h3)
     let title = '';
     const firstChild = node.firstChild;
     if (firstChild && firstChild.type.name === 'heading') {
       title = firstChild.textContent;
     }
 
-    // 获取完整的 HTML 内容
+    // Get full HTML content
     const fragment = node.content;
     let htmlContent = '';
 
-    // 简单的 HTML 序列化
+    // Simple HTML serialization
     fragment.forEach((child) => {
       if (child.type.name === 'heading') {
         htmlContent += `<h3>${child.textContent}</h3>`;
@@ -129,18 +135,18 @@ function EditableBlockComponent(props: NodeViewProps) {
       }
     });
 
-    // 获取纯文本内容
+    // Get plain text content
     const textContent = node.textContent;
 
-    // 检测是否包含代码块和数学公式
+    // Detect code blocks and math formulas
     let hasCode = false;
     const hasMath = false;
     node.descendants((n) => {
       if (n.type.name === 'codeBlock') hasCode = true;
-      // 如果有数学扩展，可以检测 math 节点
     });
 
-    const wordCount = textContent.replace(/\s+/g, '').length; // 中文字数
+    // Character count (works for both English and CJK characters)
+    const wordCount = textContent.replace(/\s+/g, '').length;
 
     return {
       title,
@@ -154,20 +160,22 @@ function EditableBlockComponent(props: NodeViewProps) {
     };
   };
 
-  // 切换完成状态
+  /**
+   * Toggle completion status
+   */
   const toggleComplete = async () => {
     setIsLoading(true);
 
     try {
       if (isCompleted) {
-        // 取消完成：从 IndexedDB 删除
+        // Uncomplete: delete from IndexedDB
         await deleteCompletedBlock(blockId);
         setIsCompleted(false);
       } else {
-        // 标记为完成：保存到 IndexedDB
+        // Mark as complete: save to IndexedDB
         const blockData = extractBlockData();
 
-        // 获取 block 在文档中的位置
+        // Get block position in document
         let position = 0;
         editor.state.doc.descendants((n, pos) => {
           if (n.attrs.id === blockId) {
@@ -176,18 +184,18 @@ function EditableBlockComponent(props: NodeViewProps) {
           }
         });
 
-        // 从 editor props 中获取 noteId
+        // Get noteId from editor props
         const attributes = editor.options.editorProps?.attributes;
         const noteId = typeof attributes === 'function'
           ? undefined
           : (attributes?.['data-note-id'] as string | undefined);
 
-        // 计算是否是叶子节点 (没有子节点)
+        // Check if this is a leaf node (has no children)
         let isLeaf = true;
         editor.state.doc.descendants((n) => {
           if (n.type.name === 'editable_block' && n.attrs.parentId === blockId) {
             isLeaf = false;
-            return false; // 找到子节点后停止遍历
+            return false; // Stop traversal after finding a child
           }
         });
 
@@ -210,7 +218,7 @@ function EditableBlockComponent(props: NodeViewProps) {
       }
     } catch (error) {
       console.error('Failed to toggle block completion:', error);
-      alert('操作失败，请重试');
+      alert('Operation failed, please try again');
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +242,7 @@ function EditableBlockComponent(props: NodeViewProps) {
           onClick={toggleComplete}
           disabled={isLoading}
           className="complete-button"
-          title={isCompleted ? '标记为未完成' : '标记为完成'}
+          title={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
           contentEditable={false}
         >
           {isLoading ? (
@@ -250,19 +258,21 @@ function EditableBlockComponent(props: NodeViewProps) {
   );
 }
 
-// 自定义 Document 节点，只允许 blank_space 和 editable_block
+// Custom Document node - only allows blank_space and editable_block
 const CustomDocument = Document.extend({
   content: '(blank_space | editable_block)+',
 });
 
-// 自定义节点：blank_space（空白区域）
+/**
+ * Custom node: blank_space (empty placeholder area)
+ */
 const BlankSpace = Node.create({
   name: 'blank_space',
   group: 'block',
-  content: '', // 不允许任何内容
+  content: '', // No content allowed
   defining: true,
   isolating: true,
-  atom: true, // 使其成为原子节点，不可编辑
+  atom: true, // Atomic node - not editable
 
   addAttributes() {
     return {
@@ -284,12 +294,14 @@ const BlankSpace = Node.create({
   },
 });
 
-// 自定义节点：editable_block（可编辑块）
-// 第一行必须是 h3 标题，其他行可以是任意内容（除了标题）
+/**
+ * Custom node: editable_block
+ * First line must be h3 heading, other lines can be any content (except headings)
+ */
 const EditableBlock = Node.create({
   name: 'editable_block',
   group: 'block',
-  content: 'heading block*', // 第一个节点必须是 heading，后面可以有任意 block
+  content: 'heading block*', // First node must be heading, followed by any blocks
   defining: true,
   isolating: true,
 
@@ -338,7 +350,9 @@ const EditableBlock = Node.create({
   },
 });
 
-// 检查光标是否在 editable_block 内
+/**
+ * Check if cursor is inside an editable_block
+ */
 const isInsideEditableBlock = (state: EditorState) => {
   const { $from } = state.selection;
   for (let d = $from.depth; d >= 0; d--) {
@@ -348,21 +362,23 @@ const isInsideEditableBlock = (state: EditorState) => {
   return false;
 };
 
-// 构建树状结构
+/**
+ * Build tree structure from editor state
+ */
 function buildBlockTree(state: EditorState): BlockTree {
   const nodes = new Map<string, BlockNode>();
   const rootIds: string[] = [];
   const references: BlockReference[] = [];
   const blocksByPosition: Array<{ id: string; indent: number; position: number }> = [];
 
-  // 第一遍：收集所有块的信息和 references
+  // First pass: collect all block info and references
   state.doc.descendants((node, pos) => {
     if (node.type.name === 'editable_block') {
       const id = node.attrs.id || generateId();
       const indent = node.attrs.indent || 0;
       const nodeReferences: string[] = [];
 
-      // 遍历 block 内部查找 nodeReference 节点
+      // Traverse block internals to find nodeReference nodes
       node.descendants((child) => {
         if (child.type.name === 'nodeReference') {
           const refId = child.attrs.refId;
@@ -386,16 +402,16 @@ function buildBlockTree(state: EditorState): BlockTree {
     }
   });
 
-  // 第二遍：确定父子关系
+  // Second pass: determine parent-child relationships
   for (let i = 0; i < blocksByPosition.length; i++) {
     const current = blocksByPosition[i];
     const currentNode = nodes.get(current.id)!;
 
     if (current.indent === 0) {
-      // indent 为 0 的是根节点
+      // Indent 0 means root node
       rootIds.push(current.id);
     } else {
-      // 向上查找第一个 indent 比当前小的节点作为父节点
+      // Look up to find first node with smaller indent as parent
       let parentId: string | null = null;
       for (let j = i - 1; j >= 0; j--) {
         const candidate = blocksByPosition[j];
@@ -412,7 +428,7 @@ function buildBlockTree(state: EditorState): BlockTree {
           parentNode.children.push(current.id);
         }
       } else {
-        // 如果没有找到父节点，也算作根节点
+        // If no parent found, treat as root node
         rootIds.push(current.id);
       }
     }
@@ -422,7 +438,9 @@ function buildBlockTree(state: EditorState): BlockTree {
 }
 
 
-// 查找父块 ID
+/**
+ * Find parent block ID based on position and indent
+ */
 function findParentBlockId(state: EditorState, currentPos: number, currentIndent: number): string | null {
   let parentId: string | null = null;
 
@@ -438,7 +456,9 @@ function findParentBlockId(state: EditorState, currentPos: number, currentIndent
   return parentId;
 }
 
-// ProseMirror 插件
+/**
+ * ProseMirror plugin for blank mode handling
+ */
 const blankModePlugin = (
   onBlockCreated?: (blockInfo: BlockInfo) => void,
   onTreeChange?: (tree: BlockTree) => void
@@ -446,40 +466,40 @@ const blankModePlugin = (
   new Plugin({
     key: new PluginKey('blankMode'),
 
-    // 清理文档中的非法内容
+    // Clean up invalid content in the document
     appendTransaction(_transactions, _oldState, newState) {
       const tr = newState.tr;
       let modified = false;
 
-      // 检查文档的直接子节点
+      // Check direct children of document
       newState.doc.descendants((node, pos, parent) => {
-        // 只检查文档的直接子节点
+        // Only check direct children of document
         if (parent !== newState.doc) return;
 
-        // 如果不是 blank_space 或 editable_block，删除它
+        // Delete if not blank_space or editable_block
         if (node.type.name !== 'blank_space' && node.type.name !== 'editable_block') {
           tr.delete(pos, pos + node.nodeSize);
           modified = true;
         }
       });
 
-      // 检查每个 editable_block
+      // Check each editable_block
       newState.doc.descendants((node, pos) => {
         if (node.type.name === 'editable_block') {
-          // 确保第一个子节点是 h3 标题
+          // Ensure first child is h3 heading
           const firstChild = node.firstChild;
           if (!firstChild || firstChild.type.name !== 'heading' || firstChild.attrs.level !== 3) {
-            // 如果第一个节点不是 h3，创建一个
+            // If first node is not h3, create one
             const h3 = newState.schema.nodes.heading.create({ level: 3 });
             tr.insert(pos + 1, h3);
             modified = true;
           }
 
-          // 确保其他子节点不是标题
+          // Ensure other children are not headings
           let childPos = pos + 1;
           node.forEach((child, _offset, index) => {
             if (index > 0 && child.type.name === 'heading') {
-              // 将标题转换为段落
+              // Convert heading to paragraph
               const paragraph = newState.schema.nodes.paragraph.create(
                 null,
                 child.content
@@ -492,7 +512,7 @@ const blankModePlugin = (
         }
       });
 
-      // 确保文档至少有一个节点
+      // Ensure document has at least one node
       if (tr.doc.childCount === 0) {
         const blank = newState.schema.nodes.blank_space.create();
         tr.insert(0, blank);
@@ -506,16 +526,16 @@ const blankModePlugin = (
       handleTextInput(view) {
         const { state } = view;
 
-        // 检查是否在允许的编辑位置
+        // Check if in allowed editing position
         if (!isInsideEditableBlock(state)) {
-          return true; // 阻止输入
+          return true; // Block input
         }
 
         return false;
       },
 
       handleDOMEvents: {
-        // 拦截所有输入事件
+        // Intercept all input events
         beforeinput: (view, event) => {
           const { state } = view;
 
@@ -526,7 +546,7 @@ const blankModePlugin = (
           return false;
         },
 
-        // 拦截粘贴事件
+        // Intercept paste events
         paste: (view, event) => {
           const { state } = view;
 
@@ -537,7 +557,7 @@ const blankModePlugin = (
           return false;
         },
 
-        // 拦截输入法事件
+        // Intercept IME composition events
         compositionstart: (view, event) => {
           const { state } = view;
 
@@ -554,15 +574,15 @@ const blankModePlugin = (
         const { selection } = state;
         const { $from } = selection;
 
-        // 检查光标前后的节点
+        // Check nodes before and after cursor
         const nodeBefore = $from.nodeBefore;
         const nodeAfter = $from.nodeAfter;
         const isBlankBefore = nodeBefore && nodeBefore.type.name === 'blank_space';
         const isBlankAfter = nodeAfter && nodeAfter.type.name === 'blank_space';
 
-        // 如果光标旁边有 blank_space，处理特殊按键
+        // If cursor is next to blank_space, handle special keys
         if (isBlankBefore || isBlankAfter) {
-          // 按 '/' 键：将 blank_space 转换为 editable_block
+          // Press '/' key: convert blank_space to editable_block
           if (event.key === '/') {
             event.preventDefault();
 
@@ -581,33 +601,29 @@ const blankModePlugin = (
               const { schema } = state;
               const indent = blankNode.attrs.indent || 0;
 
-              // 生成新块的 ID
+              // Generate new block ID
               const newBlockId = generateId();
               const parentId = indent > 0 ? findParentBlockId(state, blankPos, indent) : null;
 
-              // 创建新的 editable_block，包含一个 h3 标题
+              // Create new editable_block with h3 heading
               const heading = schema.nodes.heading.create({ level: 3 });
               const editable = schema.nodes.editable_block.create(
                 { indent, id: newBlockId, parentId },
                 heading
               );
 
-              // 替换 blank_space 为 editable_block
+              // Replace blank_space with editable_block
               const tr = state.tr.replaceWith(blankPos, blankPos + blankNode.nodeSize, editable);
 
-              // 将光标移到新块内的标题中
+              // Move cursor into the new block's heading
               dispatch(tr.setSelection(TextSelection.create(tr.doc, blankPos + 2)));
 
-              // 调用回调函数
+              // Call callback
               onBlockCreated?.({ indent, position: blankPos });
 
-              // 构建并通知树状结构
+              // Build and notify tree structure
               setTimeout(() => {
                 const tree = buildBlockTree(view.state);
-                console.log('🌳 Tree Structure Updated (/ key):', {
-                  rootIds: tree.rootIds,
-                  nodes: Array.from(tree.nodes.values()),
-                });
                 onTreeChange?.(tree);
               }, 0);
 
@@ -615,7 +631,7 @@ const blankModePlugin = (
             }
           }
 
-          // 按 Tab 键：将 blank_space 转换为有缩进的 editable_block
+          // Press Tab key: convert blank_space to indented editable_block
           if (event.key === 'Tab') {
             event.preventDefault();
 
@@ -635,33 +651,29 @@ const blankModePlugin = (
               const currentIndent = blankNode.attrs.indent || 0;
               const indent = currentIndent + 1;
 
-              // 生成新块的 ID
+              // Generate new block ID
               const newBlockId = generateId();
               const parentId = findParentBlockId(state, blankPos, indent);
 
-              // 创建一个有缩进的 editable_block，包含一个 h3 标题
+              // Create indented editable_block with h3 heading
               const heading = schema.nodes.heading.create({ level: 3 });
               const editable = schema.nodes.editable_block.create(
                 { indent, id: newBlockId, parentId },
                 heading
               );
 
-              // 替换 blank_space 为有缩进的 editable_block
+              // Replace blank_space with indented editable_block
               const tr = state.tr.replaceWith(blankPos, blankPos + blankNode.nodeSize, editable);
 
-              // 将光标移到新块内的标题中
+              // Move cursor into the new block's heading
               dispatch(tr.setSelection(TextSelection.create(tr.doc, blankPos + 2)));
 
-              // 调用回调函数
+              // Call callback
               onBlockCreated?.({ indent, position: blankPos });
 
-              // 构建并通知树状结构
+              // Build and notify tree structure
               setTimeout(() => {
                 const tree = buildBlockTree(view.state);
-                console.log('🌳 Tree Structure Updated (Tab key):', {
-                  rootIds: tree.rootIds,
-                  nodes: Array.from(tree.nodes.values()),
-                });
                 onTreeChange?.(tree);
               }, 0);
 
@@ -670,13 +682,13 @@ const blankModePlugin = (
           }
         }
 
-        // 在 editable_block 内的按键处理
+        // Key handling inside editable_block
         if (isInsideEditableBlock(state)) {
-          // Tab：增加缩进
+          // Tab: increase indent
           if (event.key === 'Tab' && !event.shiftKey) {
             event.preventDefault();
 
-            // 找到包含光标的 editable_block
+            // Find editable_block containing cursor
             let editableDepth = -1;
             for (let d = $from.depth; d >= 0; d--) {
               const node = $from.node(d);
@@ -701,11 +713,11 @@ const blankModePlugin = (
             }
           }
 
-          // Shift+Tab：减少缩进
+          // Shift+Tab: decrease indent
           if (event.key === 'Tab' && event.shiftKey) {
             event.preventDefault();
 
-            // 找到包含光标的 editable_block
+            // Find editable_block containing cursor
             let editableDepth = -1;
             for (let d = $from.depth; d >= 0; d--) {
               const node = $from.node(d);
@@ -730,11 +742,11 @@ const blankModePlugin = (
             }
           }
 
-          // Shift+Enter：退出块到新的 blank_space
+          // Shift+Enter: exit block to new blank_space
           if (event.key === 'Enter' && event.shiftKey) {
             event.preventDefault();
 
-            // 找到包含光标的 editable_block
+            // Find editable_block containing cursor
             let editableDepth = -1;
             for (let d = $from.depth; d >= 0; d--) {
               const node = $from.node(d);
@@ -749,11 +761,11 @@ const blankModePlugin = (
               const editableNode = $from.node(editableDepth);
               const insertPos = editablePos + editableNode.nodeSize;
 
-              // 在 editable_block 后插入新的 blank_space
+              // Insert new blank_space after editable_block
               const blank = state.schema.nodes.blank_space.create();
               const tr = state.tr.insert(insertPos, blank);
 
-              // 将光标移到新的 blank_space 内
+              // Move cursor to new blank_space
               dispatch(tr.setSelection(TextSelection.create(tr.doc, insertPos + 1)));
               return true;
             }
@@ -769,16 +781,18 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
   const treeChangeRef = useRef(onTreeChange);
   const editorRef = useRef<Editor | null>(null);
 
-  // 用于防抖检测无效引用
+  // Debounce timer for invalid reference detection
   const invalidRefCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRemovingInvalidRefs = useRef(false);
 
-  // 保持 ref 最新
+  // Keep ref up to date
   useEffect(() => {
     treeChangeRef.current = onTreeChange;
   }, [onTreeChange]);
 
-  // 获取当前光标所在的 block ID
+  /**
+   * Get current block ID at cursor position
+   */
   const getCurrentBlockId = useCallback((): string | null => {
     if (!editorRef.current) return null;
     const { state } = editorRef.current;
@@ -793,8 +807,10 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
     return null;
   }, []);
 
-  // 检查当前 block 是否是 leaf node (没有子节点)
-  // Leaf node 的定义：没有其他 block 是它的子节点（基于 indent 层级判断）
+  /**
+   * Check if current block is a leaf node (has no children)
+   * Leaf node definition: no other block has this block as parent (based on indent level)
+   */
   const isCurrentBlockLeaf = useCallback((): boolean => {
     if (!editorRef.current) return false;
     const currentBlockId = getCurrentBlockId();
@@ -802,7 +818,7 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
 
     const { state } = editorRef.current;
 
-    // 收集所有 block 的信息
+    // Collect all block info
     const blocks: Array<{ id: string; indent: number; position: number }> = [];
     let currentBlockIndex = -1;
     let currentBlockIndent = 0;
@@ -823,24 +839,15 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
 
     if (currentBlockIndex === -1) return false;
 
-    // 检查下一个 block 是否是当前 block 的子节点
-    // 如果下一个 block 的 indent > 当前 block 的 indent，则当前 block 不是 leaf
+    // Check if next block is a child of current block
+    // If next block's indent > current block's indent, current block is not a leaf
     const nextBlock = blocks[currentBlockIndex + 1];
     const isLeaf = !nextBlock || nextBlock.indent <= currentBlockIndent;
-
-    console.log('🌿 isCurrentBlockLeaf check:', {
-      currentBlockId,
-      currentBlockIndent,
-      currentBlockIndex,
-      nextBlock,
-      isLeaf,
-      allBlocks: blocks,
-    });
 
     return isLeaf;
   }, [getCurrentBlockId]);
 
-  // 创建 suggestion 渲染器
+  // Create suggestion renderer
   const suggestionRenderer = useMemo(
     () => createSuggestionRenderer(),
     []
@@ -850,14 +857,14 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
     extensions: [
       CustomDocument,
       StarterKit.configure({
-        // 禁用默认的硬换行、文档、标题和代码块，因为我们用自定义的
+        // Disable default hard break, document, heading and code block (we use custom ones)
         hardBreak: false,
         document: false,
         heading: false,
         codeBlock: false,
       }),
       Heading.configure({
-        levels: [3], // 只允许 h3 标题
+        levels: [3], // Only allow h3 headings
       }),
       CodeBlockLowlight.configure({
         lowlight,
@@ -870,7 +877,7 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
       }),
       BlankSpace,
       EditableBlock,
-      // NodeReference 扩展 - 输入 @ 触发引用选择（仅在 leaf node 中）
+      // NodeReference extension - type @ to trigger reference selection
       NodeReference.configure({
         getCurrentBlockId,
         isCurrentBlockLeaf,
@@ -879,7 +886,7 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
           allowSpaces: false,
           render: () => suggestionRenderer,
           command: ({ editor, range, props }) => {
-            // 删除 >> 触发字符并插入 nodeReference 节点
+            // Delete trigger character and insert nodeReference node
             editor
               .chain()
               .focus()
@@ -893,12 +900,9 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
               })
               .run();
 
-            // 更新树状结构
+            // Update tree structure
             setTimeout(() => {
               const tree = buildBlockTree(editor.state);
-              console.log('🔗 Reference Added:', {
-                references: tree.references,
-              });
               treeChangeRef.current?.(tree);
             }, 0);
           },
@@ -913,8 +917,8 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
 
-      // 检测并删除无效引用（引用了非叶子节点的）
-      // 使用防抖避免频繁检测
+      // Detect and remove invalid references (references to non-leaf nodes)
+      // Use debounce to avoid frequent detection
       if (invalidRefCheckTimer.current) {
         clearTimeout(invalidRefCheckTimer.current);
       }
@@ -923,12 +927,11 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
           isRemovingInvalidRefs.current = true;
           const removedCount = removeInvalidReferences(editor);
           if (removedCount > 0) {
-            console.log(`🧹 Auto-removed ${removedCount} invalid reference(s)`);
-            // 删除引用后，重新构建树并通知更新
+            // After removing references, rebuild tree and notify update
             const tree = buildBlockTree(editor.state);
             treeChangeRef.current?.(tree);
           }
-          // 延迟重置标志，避免删除操作触发的 onUpdate 再次执行检测
+          // Delay resetting flag to prevent delete operation triggering another detection
           setTimeout(() => {
             isRemovingInvalidRefs.current = false;
           }, 50);
@@ -977,16 +980,12 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
           })
           .run();
 
-        // 调用回调函数
+        // Call callback
         onBlockCreated?.({ indent, position: pos });
 
-        // 构建并通知树状结构
+        // Build and notify tree structure
         setTimeout(() => {
           const tree = buildBlockTree(editor.state);
-          console.log('🌳 Tree Structure Updated (Insert Block - existing blank):', {
-            rootIds: tree.rootIds,
-            nodes: Array.from(tree.nodes.values()),
-          });
           treeChangeRef.current?.(tree);
         }, 0);
 
@@ -1007,16 +1006,12 @@ export function TiptapEditor({ content = '', onChange, onBlockCreated, onTreeCha
         })
         .run();
 
-      // 调用回调函数
+      // Call callback
       onBlockCreated?.({ indent: 0, position: currentPos });
 
-      // 构建并通知树状结构
+      // Build and notify tree structure
       setTimeout(() => {
         const tree = buildBlockTree(editor.state);
-        console.log('🌳 Tree Structure Updated (Insert Block - new):', {
-          rootIds: tree.rootIds,
-          nodes: Array.from(tree.nodes.values()),
-        });
         treeChangeRef.current?.(tree);
       }, 0);
     }

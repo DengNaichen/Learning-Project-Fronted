@@ -13,7 +13,7 @@ export function CompletedBlocksViewer() {
   const loadBlocks = async () => {
     try {
       const allBlocks = await getAllCompletedBlocks();
-      // 按完成时间倒序排列
+      // Sort by completion time in descending order
       allBlocks.sort((a, b) => b.completedAt - a.completedAt);
       setBlocks(allBlocks);
     } catch (error) {
@@ -25,7 +25,7 @@ export function CompletedBlocksViewer() {
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -46,7 +46,7 @@ export function CompletedBlocksViewer() {
     return (
       <div className="text-center p-8 text-gray-500">
         <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-30" />
-        <p>还没有完成的 blocks</p>
+        <p>No completed blocks yet</p>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export function CompletedBlocksViewer() {
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
         <CheckCircle2 className="w-6 h-6 text-green-600" />
-        已完成的 Blocks ({blocks.length})
+        Completed Blocks ({blocks.length})
       </h2>
 
       <div className="space-y-3">
@@ -63,12 +63,11 @@ export function CompletedBlocksViewer() {
           <div
             key={block.id}
             className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-            style={{ marginLeft: `${block.indent * 24}px` }}
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-800 flex-1">
-                {block.title || '无标题'}
+                {block.title || 'Untitled'}
               </h3>
               <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 ml-2" />
             </div>
@@ -96,19 +95,19 @@ export function CompletedBlocksViewer() {
 
               {block.metadata?.hasCode && (
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                  包含代码
+                  Contains Code
                 </span>
               )}
 
               {block.metadata?.wordCount && block.metadata.wordCount > 0 && (
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                  {block.metadata.wordCount} 字
+                  {block.metadata.wordCount} chars
                 </span>
               )}
 
-              {block.indent > 0 && (
-                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded">
-                  缩进: {block.indent}
+              {block.isLeaf && (
+                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">
+                  Leaf
                 </span>
               )}
             </div>

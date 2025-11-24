@@ -9,18 +9,22 @@ import type {
 } from "../types/question"
 
 /**
- * Get next question for a knowledge graph (GET /graphs/{graphId}/next-question)
+ * Get next question for a knowledge graph
  *
  * Uses global apiClient (with baseURL and auth interceptors configured)
  *
  * @param graphId - UUID of the knowledge graph
+ * @param isOwner - If true, uses /me/graphs endpoint (for graph owners); otherwise uses /graphs endpoint (for enrolled users)
  * @returns `NextQuestionResponseDTO` from API with the next recommended question
  */
 export const getNextQuestion = async (
-  graphId: string
+  graphId: string,
+  isOwner: boolean = false
 ): Promise<NextQuestionResponseDTO> => {
 
-  const url = `/graphs/${graphId}/next-question`;
+  const url = isOwner
+    ? `/me/graphs/${graphId}/next-question`
+    : `/graphs/${graphId}/next-question`;
 
   try {
     const response = await apiClient.get<NextQuestionResponseDTO>(url);

@@ -4,28 +4,45 @@ import type { Graph } from "../types/graph";
 
 interface GraphCardProps {
   graph: Graph;
+  basePath?: string;
 }
 
-export const GraphCard: React.FC<GraphCardProps> = ({ graph }) => {
+// Flowing grainy gradient style
+const gradientStyle = {
+  backgroundColor: '#faf8ff',
+  backgroundImage: `
+    radial-gradient(ellipse 150% 100% at 0% 100%, rgba(147, 112, 219, 0.7) 0%, transparent 50%),
+    radial-gradient(ellipse 120% 120% at 100% 0%, rgba(64, 196, 255, 0.6) 0%, transparent 45%),
+    radial-gradient(ellipse 100% 80% at 80% 80%, rgba(255, 140, 180, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 100% at 20% 20%, rgba(180, 220, 255, 0.6) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 60% at 50% 50%, rgba(230, 200, 255, 0.4) 0%, transparent 60%)
+  `,
+};
+
+export const GraphCard: React.FC<GraphCardProps> = ({ graph, basePath = "/graphs" }) => {
   const navigate = useNavigate();
 
   const handleStartLearning = () => {
-    navigate(`/graphs/${graph.graphId}`);
+    navigate(`${basePath}/${graph.graphId}`);
   };
 
   return (
     <div className="card flex flex-col overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300">
-      {/* Card Image - Placeholder gradient */}
+      {/* Card Image - Flowing grainy gradient */}
       <div
-        className="bg-gradient-to-br from-primary via-purple-500 to-pink-500 aspect-video"
+        className="relative aspect-video overflow-hidden"
         role="img"
         aria-label={`Visualization for ${graph.graphName}`}
+        style={gradientStyle}
       >
-        <div className="w-full h-full flex items-center justify-center bg-black/10">
-          <svg className="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-        </div>
+        {/* Grain texture overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.25] mix-blend-overlay"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,%3Csvg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E')`,
+          }}
+        />
+
       </div>
 
       {/* Card Content */}

@@ -11,7 +11,11 @@ import tippy from 'tippy.js';
 import type { Instance } from 'tippy.js';
 import { Link2 } from 'lucide-react';
 
-// 从编辑器状态获取的 Block 信息
+// ===========================================
+// Types
+// ===========================================
+
+/** Block information retrieved from editor state */
 export interface EditorBlock {
   id: string;
   title: string;
@@ -20,15 +24,21 @@ export interface EditorBlock {
   isLeaf: boolean;
 }
 
-// 无效引用信息
+/** Invalid reference information */
 export interface InvalidReference {
-  blockId: string; // 包含引用的 block ID
-  refId: string; // 被引用的节点 ID
-  refTitle: string; // 被引用的节点标题
-  position: number; // 引用在文档中的位置
+  blockId: string; // Block ID containing the reference
+  refId: string; // Referenced node ID
+  refTitle: string; // Referenced node title
+  position: number; // Position in the document
 }
 
-// 获取所有叶子节点的 ID 集合
+// ===========================================
+// Helper Functions
+// ===========================================
+
+/**
+ * Get all leaf node IDs from the editor
+ */
 function getLeafNodeIds(editor: Editor): Set<string> {
   const blocks: Array<{ id: string; indent: number }> = [];
 
@@ -56,7 +66,9 @@ function getLeafNodeIds(editor: Editor): Set<string> {
   return leafIds;
 }
 
-// 检测所有无效的引用（引用了非叶子节点）
+/**
+ * Find all invalid references (references to non-leaf nodes)
+ */
 export function findInvalidReferences(editor: Editor): InvalidReference[] {
   const leafIds = getLeafNodeIds(editor);
   const invalidRefs: InvalidReference[] = [];
@@ -65,19 +77,19 @@ export function findInvalidReferences(editor: Editor): InvalidReference[] {
     if (node.type.name === 'editable_block') {
       const blockId = node.attrs.id;
 
-      // 遍历 block 内部查找引用
+      // Traverse block internals to find references
       node.descendants((child, childPos) => {
         if (child.type.name === 'nodeReference') {
           const refId = child.attrs.refId;
           const refTitle = child.attrs.refTitle;
 
-          // 如果引用的节点不是叶子节点，则为无效引用
+          // If referenced node is not a leaf, it's an invalid reference
           if (refId && !leafIds.has(refId)) {
             invalidRefs.push({
               blockId,
               refId,
-              refTitle: refTitle || '未知',
-              position: pos + childPos + 1, // 计算在文档中的绝对位置
+              refTitle: refTitle || 'Unknown',
+              position: pos + childPos + 1,
             });
           }
         }
@@ -88,7 +100,9 @@ export function findInvalidReferences(editor: Editor): InvalidReference[] {
   return invalidRefs;
 }
 
-// 删除所有无效的引用
+/**
+ * Remove all invalid references from the editor
+ */
 export function removeInvalidReferences(editor: Editor): number {
   const invalidRefs = findInvalidReferences(editor);
 
@@ -96,35 +110,33 @@ export function removeInvalidReferences(editor: Editor): number {
     return 0;
   }
 
-  // 按位置从后往前删除，避免位置偏移问题
+  // Delete from back to front to avoid position offset issues
   const sortedRefs = [...invalidRefs].sort((a, b) => b.position - a.position);
 
   editor.chain().focus();
 
   for (const ref of sortedRefs) {
-    // 找到引用节点并删除
     editor.state.doc.descendants((node, pos) => {
       if (node.type.name === 'nodeReference' && node.attrs.refId === ref.refId) {
-        // 检查位置是否匹配（允许一定误差）
         if (Math.abs(pos - ref.position) < 10) {
           editor.chain().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
-          return false; // 停止遍历
+          return false;
         }
       }
     });
   }
 
-  console.log(`🗑️ Removed ${invalidRefs.length} invalid references:`, invalidRefs);
   return invalidRefs.length;
 }
 
-// 获取当前 block 中已经引用的节点 ID 列表
+/**
+ * Get existing reference IDs in a specific block
+ */
 function getExistingReferencesInBlock(editor: Editor, blockId: string): string[] {
   const references: string[] = [];
 
   editor.state.doc.descendants((node) => {
     if (node.type.name === 'editable_block' && node.attrs.id === blockId) {
-      // 遍历这个 block 内部的所有节点
       node.descendants((child) => {
         if (child.type.name === 'nodeReference') {
           const refId = child.attrs.refId;
@@ -133,60 +145,61 @@ function getExistingReferencesInBlock(editor: Editor, blockId: string): string[]
           }
         }
       });
-      return false; // 找到目标 block 后停止遍历
+      return false;
     }
   });
 
   return references;
 }
 
-// 从编辑器状态获取所有叶子节点（排除指定的 block 和已引用的节点）
+/**
+ * Get all leaf blocks from editor (excluding specified block and already referenced nodes)
+ */
 export function getLeafBlocksFromEditor(editor: Editor, excludeId: string): EditorBlock[] {
   const blocks: Array<{ id: string; title: string; textContent: string; indent: number; position: number }> = [];
 
-  // 获取当前 block 已经引用的节点 ID
+  // Get existing references in current block
   const existingRefs = getExistingReferencesInBlock(editor, excludeId);
 
-  // 遍历文档获取所有 editable_block
+  // Traverse document to get all editable_blocks
   editor.state.doc.descendants((node, pos) => {
     if (node.type.name === 'editable_block') {
       const id = node.attrs.id;
       const indent = node.attrs.indent || 0;
 
-      // 获取标题 (第一个 heading)
+      // Get title (first heading)
       let title = '';
       const firstChild = node.firstChild;
       if (firstChild && firstChild.type.name === 'heading') {
         title = firstChild.textContent || '';
       }
 
-      // 获取纯文本内容
       const textContent = node.textContent || '';
 
       blocks.push({ id, title, textContent, indent, position: pos });
     }
   });
 
-  // 判断每个 block 是否是叶子节点
+  // Determine which blocks are leaf nodes
   const result: EditorBlock[] = [];
 
   for (let i = 0; i < blocks.length; i++) {
     const current = blocks[i];
 
-    // 排除当前正在编辑的 block
+    // Exclude current editing block
     if (current.id === excludeId) continue;
 
-    // 排除已经被引用的节点
+    // Exclude already referenced nodes
     if (existingRefs.includes(current.id)) continue;
 
-    // 检查下一个 block 是否是当前 block 的子节点
+    // Check if next block is a child of current block
     const nextBlock = blocks[i + 1];
     const isLeaf = !nextBlock || nextBlock.indent <= current.indent;
 
     if (isLeaf) {
       result.push({
         id: current.id,
-        title: current.title || '无标题',
+        title: current.title || 'Untitled',
         textContent: current.textContent,
         indent: current.indent,
         isLeaf: true,
@@ -197,9 +210,26 @@ export function getLeafBlocksFromEditor(editor: Editor, excludeId: string): Edit
   return result;
 }
 
-// ============================================
-// NodeReference 节点组件
-// ============================================
+/**
+ * Get current block ID from editor selection
+ */
+function getBlockIdFromEditor(editor: Editor): string | null {
+  const { state } = editor;
+  const { $from } = state.selection;
+
+  for (let d = $from.depth; d >= 0; d--) {
+    const node = $from.node(d);
+    if (node && node.type.name === 'editable_block') {
+      return node.attrs.id || null;
+    }
+  }
+  return null;
+}
+
+// ===========================================
+// NodeReference Component
+// ===========================================
+
 function NodeReferenceComponent({ node }: NodeViewProps) {
   const { refId, refTitle } = node.attrs;
 
@@ -208,19 +238,20 @@ function NodeReferenceComponent({ node }: NodeViewProps) {
       <span
         className="node-reference"
         data-ref-id={refId}
-        title={`引用: ${refTitle}`}
+        title={`Reference: ${refTitle}`}
         contentEditable={false}
       >
         <Link2 className="w-3 h-3 inline mr-1" />
-        {refTitle || '未知引用'}
+        {refTitle || 'Unknown Reference'}
       </span>
     </NodeViewWrapper>
   );
 }
 
-// ============================================
-// NodeReference TipTap 扩展
-// ============================================
+// ===========================================
+// NodeReference TipTap Extension
+// ===========================================
+
 export interface NodeReferenceOptions {
   suggestion: Partial<SuggestionOptions>;
   getCurrentBlockId: () => string | null;
@@ -287,17 +318,10 @@ export const NodeReference = Node.create<NodeReferenceOptions>({
   },
 
   addProseMirrorPlugins() {
-    // 保存 options 的引用
     const options = this.options;
     const editor = this.editor;
 
-    console.log('🔌 NodeReference: addProseMirrorPlugins called', {
-      hasEditor: !!editor,
-      suggestionOptions: Object.keys(options.suggestion || {}),
-    });
-
-    // 从 editor 状态获取当前 block ID 的辅助函数
-    const getBlockIdFromEditor = (): string | null => {
+    const getBlockIdFromEditorInternal = (): string | null => {
       if (!editor) return null;
       const { state } = editor;
       const { $from } = state.selection;
@@ -318,34 +342,27 @@ export const NodeReference = Node.create<NodeReferenceOptions>({
       startOfLine: false,
       pluginKey: new PluginKey('nodeReferenceSuggestion'),
       items: ({ query }) => {
-        console.log('🔍 NodeReference items called!', { query });
-
-        // 直接使用 editor 获取当前 block ID
-        const blockId = getBlockIdFromEditor();
-
-        console.log('🔍 Block check:', { blockId });
+        const blockId = getBlockIdFromEditorInternal();
 
         if (!blockId) {
-          console.log('❌ Not inside a block');
           return [];
         }
 
-        // 允许在任何 block 中使用 @ 引用，不再限制只能在叶子节点中
+        // Allow @ reference in any block
         return [{ id: '__trigger__', query }];
       },
       render: options.suggestion?.render,
       command: options.suggestion?.command,
     });
 
-    console.log('🔌 Suggestion plugin created:', !!suggestionPlugin);
-
     return [suggestionPlugin];
   },
 });
 
-// ============================================
-// Suggestion 列表组件
-// ============================================
+// ===========================================
+// Suggestion List Component
+// ===========================================
+
 export interface SuggestionListProps {
   items: EditorBlock[];
   command: (item: EditorBlock) => void;
@@ -360,7 +377,6 @@ export const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
   ({ items, command, query }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
-    // 过滤后的项目
     const filteredItems = items.filter((item) =>
       item.title.toLowerCase().includes(query.toLowerCase())
     );
@@ -408,7 +424,7 @@ export const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
       return (
         <div className="node-reference-dropdown">
           <div className="node-reference-empty">
-            {query ? `没有找到 "${query}" 相关的节点` : '没有可引用的叶子节点'}
+            {query ? `No nodes found for "${query}"` : 'No leaf nodes available to reference'}
           </div>
         </div>
       );
@@ -418,7 +434,7 @@ export const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
       <div className="node-reference-dropdown">
         <div className="node-reference-header">
           <Link2 className="w-4 h-4" />
-          <span>选择要引用的节点</span>
+          <span>Select node to reference</span>
         </div>
         <div className="node-reference-list">
           {filteredItems.map((item, index) => (
@@ -431,7 +447,7 @@ export const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
               onClick={() => selectItem(index)}
               onMouseEnter={() => setSelectedIndex(index)}
             >
-              <span className="node-reference-item-title">{item.title || '无标题'}</span>
+              <span className="node-reference-item-title">{item.title || 'Untitled'}</span>
               <span className="node-reference-item-preview">
                 {item.textContent?.slice(0, 50)}...
               </span>
@@ -445,43 +461,25 @@ export const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
 
 SuggestionList.displayName = 'SuggestionList';
 
-// 从 editor 获取当前 block ID 的辅助函数
-function getBlockIdFromEditor(editor: Editor): string | null {
-  const { state } = editor;
-  const { $from } = state.selection;
+// ===========================================
+// Suggestion Renderer Factory
+// ===========================================
 
-  for (let d = $from.depth; d >= 0; d--) {
-    const node = $from.node(d);
-    if (node && node.type.name === 'editable_block') {
-      return node.attrs.id || null;
-    }
-  }
-  return null;
-}
-
-// ============================================
-// Suggestion 渲染器工厂
-// ============================================
 export function createSuggestionRenderer() {
   let component: { ref: SuggestionListRef | null; items: EditorBlock[]; root: Root | null } | null = null;
   let popup: Instance[] | null = null;
 
   return {
     onStart: (props: SuggestionProps) => {
-      console.log('🚀 Suggestion onStart called!', { query: props.query });
-
       const editor = props.editor;
       const currentBlockId = getBlockIdFromEditor(editor);
-      console.log('📍 Current block ID:', currentBlockId, 'Editor:', !!editor);
 
       let items: EditorBlock[] = [];
 
       if (currentBlockId) {
         items = getLeafBlocksFromEditor(editor, currentBlockId);
-        console.log('📋 Available leaf blocks from editor:', items);
       }
 
-      // 创建容器元素
       const element = document.createElement('div');
       element.className = 'node-reference-popup-container';
 
@@ -505,16 +503,13 @@ export function createSuggestionRenderer() {
         offset: [0, 8],
       });
 
-      console.log('🎯 Tippy popup created:', popup);
-
-      // 渲染 React 组件
       root.render(
         <SuggestionList
           items={component.items}
           command={props.command}
           query={props.query}
-          ref={(ref) => {
-            if (component) component.ref = ref;
+          ref={(r) => {
+            if (component) component.ref = r;
           }}
         />
       );
@@ -529,14 +524,13 @@ export function createSuggestionRenderer() {
         component.items = getLeafBlocksFromEditor(editor, currentBlockId);
       }
 
-      // 重新渲染
       component.root.render(
         <SuggestionList
           items={component.items}
           command={props.command}
           query={props.query}
-          ref={(ref) => {
-            if (component) component.ref = ref;
+          ref={(r) => {
+            if (component) component.ref = r;
           }}
         />
       );
@@ -547,16 +541,12 @@ export function createSuggestionRenderer() {
     },
 
     onKeyDown: (props: { event: KeyboardEvent }) => {
-      console.log('⌨️ onKeyDown called:', props.event.key, 'ref:', !!component?.ref);
-
       if (props.event.key === 'Escape') {
         popup?.[0]?.hide();
         return true;
       }
 
-      const result = component?.ref?.onKeyDown(props.event) ?? false;
-      console.log('⌨️ onKeyDown result:', result);
-      return result;
+      return component?.ref?.onKeyDown(props.event) ?? false;
     },
 
     onExit: () => {
@@ -568,11 +558,12 @@ export function createSuggestionRenderer() {
   };
 }
 
-// ============================================
-// 样式 (导出供 TiptapEditor 使用)
-// ============================================
+// ===========================================
+// Styles
+// ===========================================
+
 export const nodeReferenceStyles = `
-  /* Node Reference 内联样式 */
+  /* Node Reference inline styles */
   .node-reference-wrapper {
     display: inline;
   }
@@ -608,7 +599,7 @@ export const nodeReferenceStyles = `
     background: linear-gradient(135deg, #c4b5fd 0%, #a5b4fc 100%);
   }
 
-  /* Dropdown 样式 */
+  /* Dropdown styles */
   .node-reference-popup-container {
     width: 300px;
     max-height: 300px;
@@ -710,7 +701,7 @@ export const nodeReferenceStyles = `
     color: #9ca3af;
   }
 
-  /* Tippy 样式覆盖 */
+  /* Tippy style overrides */
   .tippy-box {
     background: transparent !important;
     border: none !important;

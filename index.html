@@ -2,18 +2,11 @@
 <html lang="en" class="">
   <head>
     <script>
-      // Auto-detect dark mode and set class on html element
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // Check localStorage first, then fall back to system preference
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
       }
-      // Listen for changes
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (e.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      });
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />

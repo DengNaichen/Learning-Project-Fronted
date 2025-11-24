@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* ===========================================
    * COLOR SYSTEM - Simplified & Consistent
@@ -43,14 +45,14 @@
   --color-text-secondary-dark: #9ca3af;
   --color-text-tertiary-dark: #6b7280;
 
-  /* Background - Dark Mode */
-  --color-bg-dark: #0f172a;
-  --color-bg-elevated-dark: #1e293b;
-  --color-bg-muted-dark: #334155;
+  /* Background - Dark Mode (neutral gray, no blue tint) */
+  --color-bg-dark: #0a0a0a;
+  --color-bg-elevated-dark: #171717;
+  --color-bg-muted-dark: #262626;
 
   /* Border - Dark Mode */
-  --color-border-dark: #334155;
-  --color-border-strong-dark: #475569;
+  --color-border-dark: #404040;
+  --color-border-strong-dark: #525252;
 
   /* ===========================================
    * TYPOGRAPHY
@@ -85,16 +87,7 @@ body {
   color: var(--color-text-primary);
 }
 
-/* Dark mode - system preference based */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: var(--color-bg-dark);
-    color: var(--color-text-primary-dark);
-  }
-}
-
-/* Dark mode - manual class based */
-.dark body,
+/* Dark mode - class based (manual toggle) */
 html.dark body {
   background-color: var(--color-bg-dark);
   color: var(--color-text-primary-dark);
@@ -168,9 +161,9 @@ html.dark body {
 
 /* --- Navigation --- */
 .nav-header {
-  @apply flex items-center justify-between px-6 py-3 border-b
-    bg-bg-elevated border-border
-    dark:bg-bg-elevated-dark dark:border-border-dark;
+  @apply flex items-center justify-between px-6 py-3
+    bg-bg-elevated/80 border border-border rounded-lg backdrop-blur-sm
+    dark:bg-bg-elevated-dark/80 dark:border-border-dark;
 }
 
 .nav-link {

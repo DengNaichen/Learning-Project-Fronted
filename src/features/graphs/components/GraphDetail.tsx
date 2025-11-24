@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useGetGraph, useEnrollInGraph } from "../hooks/useGraphs";
+import { useGetGraph, useEnrollInGraph, useGetKnowledgeGraph } from "../hooks/useGraphs";
 import { QuestionPage } from "../../questions";
+import { ROUTES } from "../../../router";
+import KnowledgeGraph2D from "./KnowledgeGraph3D";
 
 export const GraphDetail: React.FC = () => {
   const { graphId } = useParams<{ graphId: string }>();
@@ -23,6 +25,10 @@ export const GraphDetail: React.FC = () => {
     error: enrollError,
   } = useEnrollInGraph();
 
+  const { data: knowledgeGraphData, isLoading: isGraphDataLoading } =
+    useGetKnowledgeGraph(graphId);
+
+
   const handleEnrollClick = () => {
     if (graphId) {
       enroll(graphId);
@@ -38,7 +44,11 @@ export const GraphDetail: React.FC = () => {
   };
 
   const handleViewKnowledgeGraph = () => {
-    navigate(`/graphs/${graphId}/knowledge-graph`);
+    navigate(ROUTES.GRAPH_3D(graphId!));
+  };
+
+  const handleViewNotes = () => {
+    navigate(ROUTES.GRAPH_NOTES(graphId!));
   };
 
   if (isLoading) {
@@ -270,6 +280,15 @@ export const GraphDetail: React.FC = () => {
               </div>
             )}
 
+            {/* View Notes Button */}
+            <button
+              onClick={handleViewNotes}
+              className="w-full flex items-center justify-center gap-2 h-14 px-6 text-lg font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/30 transition-colors"
+            >
+              <span className="material-symbols-outlined">description</span>
+              View as Notes
+            </button>
+
             {/* Error Messages */}
             {isEnrollError && (
               <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -281,34 +300,59 @@ export const GraphDetail: React.FC = () => {
                 </p>
               </div>
             )}
+
           </div>
 
           {/* Right Column: Interaction Pane */}
           <div className="lg:col-span-2 flex flex-col gap-8">
             {/* Knowledge Graph Preview */}
-            <div className="relative w-full aspect-4/3 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden p-8 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🌐</div>
-                <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2">
-                  Interactive Knowledge Graph
-                </h3>
-                <p className="text-text-secondary-light dark:text-text-secondary-dark mb-6">
-                  Visualize {graph.numOfKnowledgeNodes} interconnected concepts in 3D
-                </p>
-                {graph.isEnrolled ? (
+            <div className="relative w-full aspect-4/3 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              {isGraphDataLoading ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4 mx-auto"></div>
+                    <p className="text-text-secondary-light dark:text-text-secondary-dark">
+                      Loading graph...
+                    </p>
+                  </div>
+                </div>
+              ) : knowledgeGraphData ? (
+                <>
+                  <KnowledgeGraph2D data={knowledgeGraphData} />
                   <button
                     onClick={handleViewKnowledgeGraph}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"
+                    className="absolute top-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium text-sm border border-white/20"
                   >
-                    <span className="material-symbols-outlined">open_in_full</span>
-                    Open Full Graph
+                    <span className="material-symbols-outlined text-lg">open_in_full</span>
+                    Fullscreen
                   </button>
-                ) : (
-                  <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm">
-                    Enroll to access the interactive graph
-                  </p>
-                )}
-              </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🌐</div>
+                    <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2">
+                      Interactive Knowledge Graph
+                    </h3>
+                    <p className="text-text-secondary-light dark:text-text-secondary-dark mb-6">
+                      Visualize {graph.numOfKnowledgeNodes} interconnected concepts
+                    </p>
+                    {graph.isEnrolled ? (
+                      <button
+                        onClick={handleViewKnowledgeGraph}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"
+                      >
+                        <span className="material-symbols-outlined">open_in_full</span>
+                        Open Full Graph
+                      </button>
+                    ) : (
+                      <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm">
+                        Enroll to access the interactive graph
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Tabs Section */}

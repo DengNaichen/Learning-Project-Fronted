@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import type { LoginRequest } from "../types/auth";
 import { AuthLayout } from "./AuthLayout";
 import { SocialLoginButtons } from "./SocialLoginButtons";
+import { useAuth } from "../context/AuthContext";
+import { ROUTES } from "../../../router";
 
 interface LoginFormData extends LoginRequest {
   rememberMe: boolean;
@@ -19,14 +21,24 @@ export default function LoginPage() {
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.GRAPHS;
+
+  // 已登录用户自动跳转
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate, from]);
 
   const loginMutation = useMutation({
     mutationFn: loginUser,
 
     onSuccess: (data) => {
-      console.log("Login successful!", data.access_token);
-      localStorage.setItem("accessToken", data.access_token);
-      navigate("/notes", { replace: true });
+      login(data.access_token);
+      navigate(from, { replace: true });
     },
     onError: (error) => {
       console.error("Failed to login", error);

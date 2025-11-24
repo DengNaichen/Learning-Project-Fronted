@@ -4,6 +4,11 @@ import {
   getGraph,
   enrollInGraph,
   getKnowledgeGraph,
+  createGraph,
+  getMyGraphs,
+  getMyGraph,
+  getMyGraphContent,
+  getGraphContent,
 } from "../api/graphs";
 import type {
   FetchGraphResponseDTO,
@@ -11,6 +16,9 @@ import type {
   Graph,
   ApiError,
   KnowledgeGraphVisualization,
+  CreateGraphRequestDTO,
+  CreateGraphResponseDTO,
+  GraphContentResponse,
 } from "../types/graph";
 
 function convertDtoToGraph(dto: FetchGraphResponseDTO): Graph {
@@ -45,9 +53,7 @@ export function useEnrollInGraph() {
   return useMutation<EnrollmentResponseDTO, Error, string>({
     mutationFn: enrollInGraph,
 
-    onSuccess: (data, graphId) => {
-      console.log("Enrollment successful for graph:", graphId, data);
-
+    onSuccess: (_data, graphId) => {
       queryClient.setQueryData<Graph[]>(["graphs"], (oldData) => {
         if (!oldData) return [];
         return oldData.map((graph) =>
@@ -71,6 +77,53 @@ export function useGetKnowledgeGraph(graphId: string | undefined) {
   return useQuery<KnowledgeGraphVisualization, Error>({
     queryKey: ["knowledgeGraph", graphId],
     queryFn: () => getKnowledgeGraph(graphId!),
+    enabled: !!graphId,
+  });
+}
+
+export function useCreateGraph() {
+  const queryClient = useQueryClient();
+  return useMutation<CreateGraphResponseDTO, Error, CreateGraphRequestDTO>({
+    mutationFn: createGraph,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["myGraphs"] });
+    },
+    onError: (error: ApiError) => {
+      console.error("Failed to create graph:", error.message);
+    },
+  });
+}
+
+export function useGetMyGraphs() {
+  return useQuery<FetchGraphResponseDTO[], Error, Graph[]>({
+    queryKey: ["myGraphs"],
+    queryFn: getMyGraphs,
+    select: (data) => data.map(convertDtoToGraph),
+  });
+}
+
+export function useGetMyGraph(graphId: string | undefined) {
+  return useQuery<FetchGraphResponseDTO, Error, Graph>({
+    queryKey: ["myGraphs", graphId],
+    queryFn: () => getMyGraph(graphId!),
+    select: convertDtoToGraph,
+    enabled: !!graphId,
+  });
+}
+
+export function useGetMyGraphContent(graphId: string | undefined) {
+  return useQuery<GraphContentResponse, Error>({
+    queryKey: ["myGraphContent", graphId],
+    queryFn: () => getMyGraphContent(graphId!),
+    enabled: !!graphId,
+  });
+}
+
+export function useGetGraphContent(graphId: string | undefined) {
+  return useQuery<GraphContentResponse, Error>({
+    queryKey: ["graphContent", graphId],
+    queryFn: () => getGraphContent(graphId!),
     enabled: !!graphId,
   });
 }
