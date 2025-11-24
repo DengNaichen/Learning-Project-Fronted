@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://aether-web-372668020909.northamerica-northeast2.run.app",
 });
 
 apiClient.interceptors.request.use(
