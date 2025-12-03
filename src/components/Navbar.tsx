@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
+import { AuthModal } from "../features/auth/components/AuthModal";
 
 const Logo = () => (
   <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -43,8 +44,12 @@ function UserAvatarDropdown() {
 
   if (!user) return null;
 
-  // Generate a cat avatar using DiceBear API based on user name
-  const avatarUrl = `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=transparent`;
+  // Prioritize OAuth provider avatars (Google/GitHub), fallback to generated avatar
+  const providerAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+  const displayName = user.user_metadata?.name || user.email || "User";
+  const avatarUrl = providerAvatar 
+    ? providerAvatar
+    : `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=transparent`;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -54,7 +59,7 @@ function UserAvatarDropdown() {
       >
         <img
           src={avatarUrl}
-          alt={user.name}
+          alt={displayName}
           className="w-full h-full object-cover"
         />
       </button>
@@ -63,7 +68,7 @@ function UserAvatarDropdown() {
         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
           <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
             <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark truncate">
-              {user.name}
+              {displayName}
             </p>
             <p className="text-xs text-text-secondary dark:text-text-secondary-dark truncate">
               {user.email}
@@ -101,6 +106,13 @@ export function Navbar({ showCreateButton, onCreateClick }: NavbarProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const { isDark, toggle } = useTheme();
   const currentPath = location.pathname;
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  const openAuthModal = (mode: "login" | "register") => {
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
+  };
 
   const isActive = (path: string) => {
     if (path === "/graphs") {
@@ -180,16 +192,22 @@ export function Navbar({ showCreateButton, onCreateClick }: NavbarProps) {
           </>
         ) : (
           <>
-            <Link to="/login" className="btn-secondary btn-md">
+            <button onClick={() => openAuthModal("login")} className="btn-secondary btn-md">
               <span className="truncate">Log In</span>
-            </Link>
-            <Link to="/register" className="btn-primary btn-md">
+            </button>
+            <button onClick={() => openAuthModal("register")} className="btn-primary btn-md">
               <span className="truncate">Sign Up</span>
-            </Link>
+            </button>
           </>
         )}
       </div>
       </header>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authMode}
+      />
     </div>
   );
 }

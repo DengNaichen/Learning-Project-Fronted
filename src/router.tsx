@@ -1,5 +1,8 @@
 import { Routes, Route, useLocation } from "react-router-dom";
-import { LoginPage, RegisterPage, HomePage, ProfilePage } from "./features/auth";
+import {
+  HomePage,
+  ProfilePage,
+} from "./features/auth";
 import {
   GraphList,
   GraphDetail,
@@ -10,29 +13,19 @@ import {
 } from "./features/graphs";
 import { NotesPage } from "./features/notes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthCallback } from "./features/auth/components/AuthCallback";
 
 export function AppRoutes() {
   const location = useLocation();
   const isNotesPage = location.pathname === "/notes";
-  const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <div className="min-h-screen">
-      <div
-        className={
-          isNotesPage
-            ? "h-screen"
-            : isAuthPage
-              ? "flex items-center justify-center min-h-screen p-4"
-              : ""
-        }
-      >
+      <div className={isNotesPage ? "h-screen" : ""}>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* Graph routes - public for viewing */}
           <Route path="/graphs" element={<GraphList />} />
@@ -98,8 +91,6 @@ export function AppRoutes() {
 // Route constants for consistent navigation
 export const ROUTES = {
   HOME: "/",
-  LOGIN: "/login",
-  REGISTER: "/register",
   GRAPHS: "/graphs",
   GRAPH_DETAIL: (id: string) => `/graphs/${id}`,
   GRAPH_3D: (id: string) => `/graphs/${id}/3d`,

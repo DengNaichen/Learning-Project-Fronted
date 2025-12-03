@@ -62,7 +62,7 @@ function convertSubmitResponseDtoToUi(dto: SingleAnswerSubmitResponseDTO): Singl
     answerId: dto.answer_id,
     isCorrect: dto.is_correct,
     masteryUpdated: dto.mastery_updated,
-    nextQuestionId: dto.next_question_id,
+    correctAnswer: dto.correct_answer,
   };
 }
 

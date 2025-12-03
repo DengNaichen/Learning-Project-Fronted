@@ -139,12 +139,12 @@ export interface SingleAnswerSubmitResponseDTO {
   answer_id: string;
   is_correct: boolean;
   mastery_updated: boolean;
-  next_question_id: string | null;
+  correct_answer: AnyAnswer;
 }
 
 export interface SingleAnswerSubmitResponseUI {
   answerId: string;
   isCorrect: boolean;
   masteryUpdated: boolean;
-  nextQuestionId: string | null;
+  correctAnswer: AnyAnswer;
 }
