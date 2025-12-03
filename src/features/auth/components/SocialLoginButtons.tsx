@@ -1,18 +1,42 @@
+import { useState } from "react";
+import { supabase } from "../../../lib/supabase";
+
 export function SocialLoginButtons() {
-  const handleSocialLogin = (provider: string) => {
-    // TODO: Implement social login logic
-    console.log(`Login with ${provider}`);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
+  const handleSocialLogin = async (provider: "google" | "github") => {
+    setIsLoading(provider);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error(`${provider} login failed:`, error);
+      setIsLoading(null);
+    }
   };
 
   return (
-    <div className="flex flex-col items-stretch gap-3 px-4">
+    <div className="flex flex-col items-stretch gap-3">
       {/* Google Login */}
       <button
         type="button"
-        onClick={() => handleSocialLogin("Google")}
-        className="btn-secondary btn-md w-full gap-2"
+        onClick={() => handleSocialLogin("google")}
+        disabled={!!isLoading}
+        className="btn-secondary btn-md w-full gap-2 flex items-center justify-center"
       >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <g clipPath="url(#clip0_3033_335)">
             <path
               d="M21.9999 12.227C21.9999 11.39 21.9269 10.563 21.7839 9.764H12.2179V14.453H17.7129C17.4759 15.744 16.7939 16.857 15.8299 17.539V20.28H19.5319C21.1689 18.784 21.9999 16.66 21.9999 13.982C21.9999 13.39 21.9999 12.8 21.9999 12.227Z"
@@ -33,20 +57,33 @@ export function SocialLoginButtons() {
           </g>
           <defs>
             <clipPath id="clip0_3033_335">
-              <rect fill="white" height="21.547" transform="translate(1 0.453125)" width="21.547" />
+              <rect
+                fill="white"
+                height="21.547"
+                transform="translate(1 0.453125)"
+                width="21.547"
+              />
             </clipPath>
           </defs>
         </svg>
-        <span className="truncate">Continue with Google</span>
+        <span className="truncate">
+          {isLoading === "google" ? "Loading..." : "Continue with Google"}
+        </span>
       </button>
 
       {/* GitHub Login */}
       <button
         type="button"
-        onClick={() => handleSocialLogin("GitHub")}
-        className="btn-secondary btn-md w-full gap-2"
+        onClick={() => handleSocialLogin("github")}
+        disabled={!!isLoading}
+        className="btn-secondary btn-md w-full gap-2 flex items-center justify-center"
       >
-        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="h-5 w-5"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             clipRule="evenodd"
             d="M12 2C6.477 2 2 6.477 2 12C2 16.425 4.86 20.165 8.84 21.49C9.484 21.602 9.696 21.218 9.696 20.886C9.696 20.586 9.684 19.743 9.679 18.735C7.039 19.23 6.367 17.934 6.16 17.388C6.043 17.073 5.512 16.098 5.122 15.864C4.805 15.681 4.213 15.144 5.092 15.13C5.902 15.117 6.49 15.9 6.685 16.182C7.575 17.688 9.043 17.256 9.733 16.953C9.814 16.362 10.056 15.951 10.327 15.72C8.259 15.498 6.048 14.706 6.048 11.2C6.048 10.107 6.43 9.228 7.035 8.55C6.939 8.316 6.648 7.425 7.126 6.273C7.126 6.273 7.891 6.021 9.658 7.2C10.378 7.005 11.184 6.906 12 6.906C12.816 6.906 13.622 7.005 14.342 7.2C16.109 6.021 16.874 6.273 16.874 6.273C17.352 7.425 17.061 8.316 16.965 8.55C17.57 9.228 17.952 10.107 17.952 11.2C17.952 14.718 15.741 15.498 13.673 15.72C14.01 16.002 14.327 16.53 14.327 17.355C14.327 18.543 14.315 19.488 14.315 19.818C14.315 20.154 14.516 20.358 15.168 20.247C19.141 18.915 22 15.18 22 12C22 6.477 17.523 2 12 2Z"
@@ -54,18 +91,6 @@ export function SocialLoginButtons() {
           />
         </svg>
         <span className="truncate">Continue with GitHub</span>
-      </button>
-
-      {/* Apple Login */}
-      <button
-        type="button"
-        onClick={() => handleSocialLogin("Apple")}
-        className="btn-secondary btn-md w-full gap-2"
-      >
-        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19.162 13.111C19.213 12.753 19.24 12.384 19.24 12C19.24 11.608 19.213 11.231 19.162 10.864H16.425C16.829 9.988 17.072 9.02 17.072 8C17.072 6.131 16.143 4.545 14.654 3.738C13.816 2.656 12.553 2 11.121 2C9.58 2 8.243 2.768 7.346 4.026C5.59 4.314 4.328 5.702 4.328 7.5C4.328 8.924 5.109 10.158 6.308 10.74C5.972 11.442 5.803 12.21 5.803 13C5.803 14.545 6.484 15.93 7.625 16.793C7.575 16.92 7.525 17.047 7.475 17.174C6.188 17.652 5.094 18.49 4.281 19.58C5.698 21.05 7.659 22 9.875 22C11.196 22 12.445 21.635 13.516 20.994C14.735 21.654 16.113 22 17.625 22C19.531 22 22 20.205 22 18C22 16.11 20.893 14.55 19.162 13.111ZM11.121 3.5C12.115 3.5 12.984 4.062 13.447 4.904C13.018 5.03 12.63 5.112 12.25 5.112C12.169 5.112 12.088 5.105 12.007 5.09C10.05 4.802 8.868 3.5 8.868 3.5C9.489 3.5 10.457 3.5 11.121 3.5Z" />
-        </svg>
-        <span className="truncate">Continue with Apple</span>
       </button>
     </div>
   );

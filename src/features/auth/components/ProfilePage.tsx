@@ -8,9 +8,10 @@ export default function ProfilePage() {
     return null;
   }
 
-  const initials = user.name
+  const name = user.user_metadata?.name || user.email || "User";
+  const initials = name
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -29,7 +30,7 @@ export default function ProfilePage() {
             {/* User Info */}
             <div className="text-center">
               <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                {user.name}
+                {name}
               </h1>
               <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
                 {user.email}

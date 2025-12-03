@@ -3,82 +3,61 @@ import {
   useContext,
   useState,
   useEffect,
-  useCallback,
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { supabase } from "../../../lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  token: string | null;
+  session: Session | null;
   user: User | null;
-  login: (token: string) => void;
-  logout: () => void;
-}
-
-function parseJwt(token: string): User | null {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    const payload = JSON.parse(jsonPayload);
-    return {
-      id: payload.sub || payload.id,
-      email: payload.email,
-      name: payload.name || payload.email?.split("@")[0] || "User",
-    };
-  } catch {
-    return null;
-  }
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!session;
 
-  // 只在 mount 时检查一次 localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem("accessToken");
-    if (storedToken) {
-      setToken(storedToken);
-      setUser(parseJwt(storedToken));
-    }
-    setIsLoading(false);
+    // get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session);
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = useCallback((newToken: string) => {
-    localStorage.setItem("accessToken", newToken);
-    setToken(newToken);
-    setUser(parseJwt(newToken));
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem("accessToken");
-    setToken(null);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
     setUser(null);
-    navigate("/login", { replace: true });
-  }, [navigate]);
+    // Also clear the localStorage token
+    localStorage.removeItem("accessToken");
+    navigate("/", { replace: true });
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, token, user, login, logout }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, isLoading, session, user, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
