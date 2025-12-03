@@ -37,8 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
     });
@@ -49,8 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    // Also clear the localStorage token
-    localStorage.removeItem("accessToken");
     navigate("/", { replace: true });
   };
 

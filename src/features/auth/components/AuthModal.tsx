@@ -33,12 +33,6 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
       console.log("Session:", data.session);
       console.log("User:", data.user);
 
-      // Store access token in localStorage for API calls
-      if (data.session?.access_token) {
-        localStorage.setItem("accessToken", data.session.access_token);
-        console.log("Access token stored in localStorage");
-      }
-
       onClose();
     } catch (err) {
       console.error("Login error:", err);
@@ -53,7 +47,6 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     setIsLoading(true);
     setError(null);
 
-    // 验证密码
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setIsLoading(false);
@@ -67,18 +60,14 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: email,
         password: password,
       });
 
       if (error) throw error;
 
-      // Store access token in localStorage for API calls
-      if (data.session?.access_token) {
-        localStorage.setItem("accessToken", data.session.access_token);
-        console.log("Access token stored in localStorage after registration");
-      }
+
 
       onClose();
     } catch (err) {
@@ -103,7 +92,6 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-        {/* 关闭按钮 */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"

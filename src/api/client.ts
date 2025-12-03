@@ -1,15 +1,19 @@
 import axios from "axios";
+import { supabase } from "../lib/supabase";
 
 const apiClient = axios.create({
-  baseURL: "https://aether-web-372668020909.northamerica-northeast2.run.app",
+  // baseURL: "http://localhost:8000",
+  baseURL: "https://aether-372668020909.northamerica-northeast2.run.app",
 });
 
-// 请求拦截器:自动添加token
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+  async (config) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.access_token) {
+      config.headers["Authorization"] = `Bearer ${session.access_token}`;
     }
     return config;
   },
@@ -22,10 +26,10 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      console.warn("Authentication failed (401), clearing token");
-      localStorage.removeItem("accessToken");
+      console.warn("Authentication failed (401), signing out");
+      await supabase.auth.signOut();
 
       if (!window.location.pathname.includes("/login")) {
         window.location.href = "/?login=true";

@@ -54,6 +54,11 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
   };
 
   const isCorrect = submitAnswerMutation.data?.isCorrect;
+  const correctAnswer = submitAnswerMutation.data?.correctAnswer;
+  const correctOptionIndex =
+    correctAnswer?.question_type === "multiple_choice"
+      ? correctAnswer.selected_option
+      : undefined;
 
   return (
     <div className="flex flex-col gap-6 container mx-auto px-4">
@@ -114,6 +119,12 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
               showFeedback = true;
               feedbackText = "Incorrect";
               feedbackClass = "text-sm font-bold text-red-600 dark:text-red-400";
+            } else if (index === correctOptionIndex) {
+              labelClass +=
+                "border-2 border-green-500 bg-green-500/10 dark:bg-green-500/20";
+              showFeedback = true;
+              feedbackText = "Correct Answer";
+              feedbackClass = "text-sm font-bold text-green-600 dark:text-green-400";
             } else {
               labelClass += "border border-solid border-gray-200 dark:border-gray-700 bg-surface-light dark:bg-surface-dark opacity-60";
             }

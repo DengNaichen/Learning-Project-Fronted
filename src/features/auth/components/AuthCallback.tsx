@@ -39,11 +39,7 @@ export function AuthCallback() {
 
         if (session) {
           console.log("AuthCallback: Session found, navigating to /graphs");
-          // Store access token in localStorage for API calls
-          if (session.access_token) {
-            localStorage.setItem("accessToken", session.access_token);
-            console.log("Access token stored in localStorage");
-          }
+
           navigate("/graphs", { replace: true });
         } else {
           console.log("AuthCallback: No session found, navigating to /");
