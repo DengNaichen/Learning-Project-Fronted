@@ -54,6 +54,7 @@ export function useEnrollInGraph() {
     mutationFn: enrollInGraph,
 
     onSuccess: (_data, graphId) => {
+      // Update cache immediately for optimistic UI
       queryClient.setQueryData<Graph[]>(["graphs"], (oldData) => {
         if (!oldData) return [];
         return oldData.map((graph) =>
@@ -65,6 +66,10 @@ export function useEnrollInGraph() {
         if (!oldData) return undefined;
         return { ...oldData, isEnrolled: true };
       });
+
+      // Invalidate queries to refetch and ensure UI is in sync
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graphs", graphId] });
     },
 
     onError: (error: ApiError, graphId) => {
