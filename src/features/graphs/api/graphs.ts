@@ -32,7 +32,7 @@ export const enrollInGraph = async (
     graph_id: graphId,
   };
   const response = await apiClient.post<EnrollmentResponseDTO>(
-    `/graphs/${graphId}/enrollments/`,
+    `/graphs/${graphId}/enrollments`,
     requestBody
   );
   return response.data;
