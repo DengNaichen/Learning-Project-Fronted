@@ -2,8 +2,7 @@ import axios from "axios";
 import { supabase } from "../lib/supabase";
 
 const apiClient = axios.create({
-  // baseURL: "http://localhost:8000",
-  baseURL: "https://aether-372668020909.northamerica-northeast2.run.app",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
 apiClient.interceptors.request.use(
