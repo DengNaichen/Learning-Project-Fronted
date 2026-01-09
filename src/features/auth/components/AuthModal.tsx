@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SocialLoginButtons } from "./SocialLoginButtons";
-import { supabase } from "../../../lib/supabase";
+import { signInWithPassword, signUpWithPassword } from "../supabaseAuth";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,26 +16,24 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setMode(initialMode);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setError(null);
+  }, [isOpen, initialMode]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (error) throw error;
-
-      console.log("Login successful!", data);
-      console.log("Session:", data.session);
-      console.log("User:", data.user);
-
+      await signInWithPassword(email, password);
       onClose();
     } catch (err) {
-      console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "Login Failed, Please Try Again");
     } finally {
       setIsLoading(false);
@@ -60,15 +58,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
-
-      if (error) throw error;
-
-
-
+      await signUpWithPassword(email, password);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration Failed, Please Try Again");

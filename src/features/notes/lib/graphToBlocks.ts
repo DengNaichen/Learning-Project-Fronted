@@ -1,17 +1,11 @@
 /**
  * Convert GraphContentResponse to BlockNote blocks
  *
- * This module transforms backend graph data into a hierarchical
+ * This module transforms backend graph data into a simple
  * block structure compatible with BlockNoteEditor.
- *
- * Mapping:
- * - subtopics → block children (nesting)
- * - prerequisites → nodeReference inline content
- * - node.node_name → paragraph text
- * - node.description → appended to text content
  */
 
-import type { GraphContentResponse, GraphContentNode } from "../../graphs/types/graph";
+import type { GraphContentResponse, GraphContentNode } from "../../../domain/graph";
 
 // BlockNote block types (simplified for generation)
 interface InlineContent {
@@ -95,30 +89,8 @@ interface GeneratedBlock {
 }
 
 /**
- * Build a map of parent -> children from subtopics
- */
-function buildChildrenMap(
-  subtopics: GraphContentResponse["subtopics"]
-): Map<string, string[]> {
-  const childrenMap = new Map<string, string[]>();
-
-  for (const subtopic of subtopics) {
-    const parentId = subtopic.parent_node_id;
-    const childId = subtopic.child_node_id;
-
-    if (!childrenMap.has(parentId)) {
-      childrenMap.set(parentId, []);
-    }
-    childrenMap.get(parentId)!.push(childId);
-  }
-
-  return childrenMap;
-}
-
-/**
  * Build a map of nodeId -> prerequisite target node IDs
  * In prerequisites, from_node_id has prerequisites on to_node_id
- * So from_node_id should reference to_node_id
  */
 function buildPrerequisitesMap(
   prerequisites: GraphContentResponse["prerequisites"]
@@ -139,31 +111,12 @@ function buildPrerequisitesMap(
 }
 
 /**
- * Find root nodes (nodes that are not children of any other node)
- */
-function findRootNodes(
-  nodes: GraphContentNode[],
-  subtopics: GraphContentResponse["subtopics"]
-): string[] {
-  const allChildIds = new Set(subtopics.map(s => s.child_node_id));
-
-  // Root nodes are nodes that are never a child
-  const rootIds = nodes
-    .filter(node => !allChildIds.has(node.id))
-    .map(node => node.id);
-
-  return rootIds;
-}
-
-/**
- * Create inline content for a node, including prerequisites as references
- * Parses $...$ and $$...$$ math formulas in the description
+ * Create inline content for a node, including prerequisites as references.
  */
 function createNodeContent(
   node: GraphContentNode,
   prerequisiteTargets: string[],
-  nodesMap: Map<string, GraphContentNode>,
-  leafNodeIds: Set<string>
+  nodesMap: Map<string, GraphContentNode>
 ): InlineContent[] {
   const content: InlineContent[] = [];
 
@@ -179,12 +132,11 @@ function createNodeContent(
       type: "text",
       text: ": ",
     });
-    // Parse the description for math formulas
     const parsedContent = parseTextWithMath(node.description);
     content.push(...parsedContent);
   }
 
-  // Add prerequisite references (only if target is a leaf node)
+  // Add prerequisite references
   if (prerequisiteTargets.length > 0) {
     content.push({
       type: "text",
@@ -192,22 +144,19 @@ function createNodeContent(
     });
 
     for (const targetId of prerequisiteTargets) {
-      // Only reference leaf nodes
-      if (leafNodeIds.has(targetId)) {
-        const targetNode = nodesMap.get(targetId);
-        if (targetNode) {
-          content.push({
-            type: "nodeReference",
-            props: {
-              refId: targetId,
-              refTitle: targetNode.node_name,
-            },
-          });
-          content.push({
-            type: "text",
-            text: " ",
-          });
-        }
+      const targetNode = nodesMap.get(targetId);
+      if (targetNode) {
+        content.push({
+          type: "nodeReference",
+          props: {
+            refId: targetId,
+            refTitle: targetNode.node_name,
+          },
+        });
+        content.push({
+          type: "text",
+          text: " ",
+        });
       }
     }
   }
@@ -216,100 +165,32 @@ function createNodeContent(
 }
 
 /**
- * Recursively build blocks from a node and its children
- */
-function buildBlockFromNode(
-  nodeId: string,
-  nodesMap: Map<string, GraphContentNode>,
-  childrenMap: Map<string, string[]>,
-  prerequisitesMap: Map<string, string[]>,
-  leafNodeIds: Set<string>
-): GeneratedBlock | null {
-  const node = nodesMap.get(nodeId);
-  if (!node) return null;
-
-  const directChildIds = childrenMap.get(nodeId) || [];
-  const prerequisiteTargets = prerequisitesMap.get(nodeId) || [];
-
-  // Build children blocks recursively
-  const childBlocks: GeneratedBlock[] = [];
-  for (const childId of directChildIds) {
-    const childBlock = buildBlockFromNode(
-      childId,
-      nodesMap,
-      childrenMap,
-      prerequisitesMap,
-      leafNodeIds
-    );
-    if (childBlock) {
-      childBlocks.push(childBlock);
-    }
-  }
-
-  // Create the block
-  const block: GeneratedBlock = {
-    id: nodeId,
-    type: "paragraph",
-    props: {},
-    content: createNodeContent(node, prerequisiteTargets, nodesMap, leafNodeIds),
-    children: childBlocks,
-  };
-
-  return block;
-}
-
-/**
- * Identify all leaf node IDs (nodes with no children)
- */
-function findLeafNodeIds(
-  nodes: GraphContentNode[],
-  childrenMap: Map<string, string[]>
-): Set<string> {
-  const leafIds = new Set<string>();
-
-  for (const node of nodes) {
-    const children = childrenMap.get(node.id) || [];
-    if (children.length === 0) {
-      leafIds.add(node.id);
-    }
-  }
-
-  return leafIds;
-}
-
-/**
  * Main conversion function: GraphContentResponse → BlockNote blocks
  */
 export function graphContentToBlocks(
   data: GraphContentResponse
 ): GeneratedBlock[] {
-  const { nodes, prerequisites, subtopics } = data;
+  const { nodes, prerequisites } = data;
 
-  // Build lookup maps
-  const nodesMap = new Map(nodes.map(n => [n.id, n]));
-  const childrenMap = buildChildrenMap(subtopics);
+  const nodesMap = new Map(nodes.map((node) => [node.id, node]));
   const prerequisitesMap = buildPrerequisitesMap(prerequisites);
-  const leafNodeIds = findLeafNodeIds(nodes, childrenMap);
 
-  // Find root nodes
-  const rootIds = findRootNodes(nodes, subtopics);
+  const sortedNodes = [...nodes].sort((a, b) => {
+    if (a.level !== b.level) return a.level - b.level;
+    return a.node_name.localeCompare(b.node_name);
+  });
 
-  // Build blocks starting from roots
-  const blocks: GeneratedBlock[] = [];
-  for (const rootId of rootIds) {
-    const block = buildBlockFromNode(
-      rootId,
-      nodesMap,
-      childrenMap,
-      prerequisitesMap,
-      leafNodeIds
-    );
-    if (block) {
-      blocks.push(block);
-    }
-  }
-
-  return blocks;
+  return sortedNodes.map((node) => ({
+    id: node.id,
+    type: "paragraph",
+    props: {},
+    content: createNodeContent(
+      node,
+      prerequisitesMap.get(node.id) ?? [],
+      nodesMap
+    ),
+    children: [],
+  }));
 }
 
 /**
