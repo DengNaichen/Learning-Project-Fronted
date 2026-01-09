@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import type { Graph } from "../types/graph";
+import type { Graph } from "../../../domain/graph";
 
 interface GraphCardProps {
   graph: Graph;

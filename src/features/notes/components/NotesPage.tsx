@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Block } from "@blocknote/core";
 import { Plus, Trash2 } from "lucide-react";
-import { Navbar } from "../../../components/Navbar";
+import { Navbar } from "../../../components/layout/Navbar";
 import { BlockNoteEditor } from "./BlockNoteEditor";
 import { BlockTreeGraph } from "./BlockTreeGraph";
 import { customSchema } from "../lib/customBlocks.js";

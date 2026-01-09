@@ -1,11 +1,10 @@
 // Export graph components
-export { GraphList } from "./components/GraphList";
-export { GraphDetail } from "./components/GraphDetail";
+export { GraphList } from "./pages/GraphList";
+export { GraphDetail } from "./pages/GraphDetail";
 export { GraphCard } from "./components/GraphCard";
-export { default as KnowledgeGraphPage } from "./components/KnowledgeGraphPage";
-export { MyGraphs } from "./components/MyGraphs";
-export { MyGraphDetail } from "./components/MyGraphDetail";
-export { GraphNotesPage } from "./components/GraphNotesPage";
+export { default as KnowledgeGraphPage } from "./pages/KnowledgeGraphPage";
+export { MyGraphs } from "./pages/MyGraphs";
+export { MyGraphDetail } from "./pages/MyGraphDetail";
 
 // Export hooks
 export {
@@ -18,10 +17,4 @@ export {
 } from "./hooks/useGraphs";
 
 // Export types
-export type {
-  Graph,
-  FetchGraphResponseDTO,
-  EnrollmentRequestDTO,
-  EnrollmentResponseDTO,
-  ApiError,
-} from "./types/graph";
+export type { Graph, FetchGraphResponseDTO, EnrollmentResponseDTO } from "../../domain/graph";

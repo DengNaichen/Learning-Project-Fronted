@@ -1,21 +1,14 @@
 import { useState } from "react";
-import { supabase } from "../../../lib/supabase";
+import { signInWithOAuth, type OAuthProvider } from "../supabaseAuth";
 
 export function SocialLoginButtons() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handleSocialLogin = async (provider: "google" | "github") => {
+  const handleSocialLogin = async (provider: OAuthProvider) => {
     setIsLoading(provider);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
+      await signInWithOAuth(provider);
     } catch (error) {
       console.error(`${provider} login failed:`, error);
       setIsLoading(null);
